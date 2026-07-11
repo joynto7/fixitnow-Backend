@@ -1,8 +1,925 @@
 openapi: 3.0.3
 info:
   title: FixItNow API
-  description: Backend API for the FixItNow home services marketplace.
+  description: |
+    Backend API for **FixItNow**, a home services marketplace connecting customers
+    with technicians (plumbing, electrical, cleaning, painting, etc).
+
+    All responses share one envelope shape:
+    - Success: `{ "success": true, "message": string, "data": ..., "meta"?: {...} }`
+    - Error:   `{ "success": false, "message": string, "errorDetails": ... }`
+
+    Authenticate by logging in (or registering) to receive a JWT, then send it as
+    `Authorization: Bearer <token>` on protected endpoints.
   version: 1.0.0
 servers:
   - url: /api
-paths: {}
+    description: Current host, under /api
+tags:
+  - name: Auth
+  - name: Categories
+  - name: Services
+  - name: Technicians
+  - name: Bookings
+  - name: Payments
+  - name: Reviews
+  - name: Admin
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    page:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 1, default: 1 }
+    limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        message: { type: string, example: 'Validation failed' }
+        errorDetails:
+          nullable: true
+          example: [{ field: 'body.email', message: 'A valid email is required' }]
+
+    Meta:
+      type: object
+      properties:
+        total: { type: integer, example: 1 }
+        page: { type: integer, example: 1 }
+        limit: { type: integer, example: 20 }
+
+    Role:
+      type: string
+      enum: [CUSTOMER, TECHNICIAN, ADMIN]
+    UserStatus:
+      type: string
+      enum: [ACTIVE, BANNED]
+    BookingStatus:
+      type: string
+      enum: [REQUESTED, ACCEPTED, DECLINED, PAID, IN_PROGRESS, COMPLETED, CANCELLED]
+    PaymentProvider:
+      type: string
+      enum: [STRIPE, SSLCOMMERZ]
+    PaymentStatus:
+      type: string
+      enum: [PENDING, COMPLETED, FAILED]
+
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, example: 'Alice Customer' }
+        email: { type: string, format: email }
+        phone: { type: string, nullable: true }
+        role: { $ref: '#/components/schemas/Role' }
+        status: { $ref: '#/components/schemas/UserStatus' }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        technicianProfile:
+          nullable: true
+          allOf: [{ $ref: '#/components/schemas/TechnicianProfile' }]
+
+    TechnicianProfile:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        userId: { type: string, format: uuid }
+        bio: { type: string, nullable: true }
+        experienceYears: { type: integer, nullable: true }
+        location: { type: string, nullable: true }
+        avgRating: { type: number, example: 4.5 }
+        totalReviews: { type: integer, example: 3 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        user:
+          type: object
+          description: Present when returned from a public technician endpoint.
+          properties:
+            id: { type: string, format: uuid }
+            name: { type: string }
+            email: { type: string }
+            phone: { type: string, nullable: true }
+        services:
+          type: array
+          items: { $ref: '#/components/schemas/Service' }
+        reviews:
+          type: array
+          items: { $ref: '#/components/schemas/Review' }
+
+    Category:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, example: 'Plumbing' }
+        description: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    Service:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string, example: 'Leak Fix' }
+        description: { type: string, nullable: true }
+        price: { type: string, description: 'Decimal serialized as a string', example: '49.99' }
+        categoryId: { type: string, format: uuid }
+        technicianId: { type: string, format: uuid }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        category: { $ref: '#/components/schemas/Category' }
+
+    Availability:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        technicianId: { type: string, format: uuid }
+        date: { type: string, format: date }
+        startTime: { type: string, example: '09:00' }
+        endTime: { type: string, example: '12:00' }
+        isBooked: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    Booking:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        customerId: { type: string, format: uuid }
+        technicianId: { type: string, format: uuid }
+        serviceId: { type: string, format: uuid }
+        scheduledDate: { type: string, format: date-time }
+        address: { type: string }
+        notes: { type: string, nullable: true }
+        status: { $ref: '#/components/schemas/BookingStatus' }
+        price: { type: string, example: '49.99' }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        service: { $ref: '#/components/schemas/Service' }
+        payment:
+          nullable: true
+          allOf: [{ $ref: '#/components/schemas/Payment' }]
+
+    Payment:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        bookingId: { type: string, format: uuid }
+        transactionId: { type: string, example: 'FXN-3f9b1c2e-...' }
+        amount: { type: string, example: '49.99' }
+        provider: { $ref: '#/components/schemas/PaymentProvider' }
+        status: { $ref: '#/components/schemas/PaymentStatus' }
+        paidAt: { type: string, format: date-time, nullable: true }
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
+    Review:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        bookingId: { type: string, format: uuid }
+        customerId: { type: string, format: uuid }
+        technicianId: { type: string, format: uuid }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        comment: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+  responses:
+    BadRequest:
+      description: Validation or business-rule error
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Unauthorized:
+      description: Missing/invalid authentication
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Forbidden:
+      description: Authenticated but not permitted
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotFound:
+      description: Resource not found
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Conflict:
+      description: Conflicts with existing state (duplicate, already paid, etc.)
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new customer or technician
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name: { type: string, example: 'Alice Customer' }
+                email: { type: string, format: email }
+                password: { type: string, minLength: 6 }
+                phone: { type: string }
+                role: { type: string, enum: [CUSTOMER, TECHNICIAN], default: CUSTOMER }
+      responses:
+        '201':
+          description: Registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string }
+                  data:
+                    type: object
+                    properties:
+                      user: { $ref: '#/components/schemas/User' }
+                      token: { type: string }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in and receive a JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        '200':
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string }
+                  data:
+                    type: object
+                    properties:
+                      user: { $ref: '#/components/schemas/User' }
+                      token: { type: string }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get the current authenticated user
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /categories:
+    get:
+      tags: [Categories]
+      summary: List all service categories (public)
+      responses:
+        '200':
+          description: Categories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data: { type: array, items: { $ref: '#/components/schemas/Category' } }
+
+  /admin/categories:
+    get:
+      tags: [Admin]
+      summary: List categories (admin)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Categories }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Admin]
+      summary: Create a category (admin)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, example: 'Plumbing' }
+                description: { type: string }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data: { $ref: '#/components/schemas/Category' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /admin/categories/{id}:
+    put:
+      tags: [Admin]
+      summary: Update a category (admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+      responses:
+        '200': { description: Updated }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Admin]
+      summary: Delete a category (admin, blocked if it still has services)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Deleted }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /services:
+    get:
+      tags: [Services]
+      summary: Browse services (public, filterable)
+      parameters:
+        - { name: categoryId, in: query, schema: { type: string, format: uuid } }
+        - { name: technicianId, in: query, schema: { type: string, format: uuid } }
+        - { name: minPrice, in: query, schema: { type: number } }
+        - { name: maxPrice, in: query, schema: { type: number } }
+        - { name: search, in: query, schema: { type: string } }
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Services
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data: { type: array, items: { $ref: '#/components/schemas/Service' } }
+                  meta: { $ref: '#/components/schemas/Meta' }
+    post:
+      tags: [Services]
+      summary: Create a service (technician only)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, price, categoryId]
+              properties:
+                title: { type: string }
+                description: { type: string }
+                price: { type: number, example: 49.99 }
+                categoryId: { type: string, format: uuid }
+      responses:
+        '201': { description: Created }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /services/{id}:
+    get:
+      tags: [Services]
+      summary: Get a service by id (public)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Service
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data: { $ref: '#/components/schemas/Service' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Services]
+      summary: Update own service (technician only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+                description: { type: string }
+                price: { type: number }
+                categoryId: { type: string, format: uuid }
+      responses:
+        '200': { description: Updated }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Services]
+      summary: Delete own service (technician only, blocked if it has bookings)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Deleted }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /technicians:
+    get:
+      tags: [Technicians]
+      summary: Browse technicians (public, filterable)
+      parameters:
+        - { name: categoryId, in: query, schema: { type: string, format: uuid } }
+        - { name: location, in: query, schema: { type: string } }
+        - { name: minRating, in: query, schema: { type: number } }
+        - { name: search, in: query, schema: { type: string } }
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Technicians
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data: { type: array, items: { $ref: '#/components/schemas/TechnicianProfile' } }
+                  meta: { $ref: '#/components/schemas/Meta' }
+
+  /technicians/{id}:
+    get:
+      tags: [Technicians]
+      summary: Get a technician's public profile (services + recent reviews)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Technician
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data: { $ref: '#/components/schemas/TechnicianProfile' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /technician/profile:
+    put:
+      tags: [Technicians]
+      summary: Update own technician profile
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bio: { type: string }
+                experienceYears: { type: integer }
+                location: { type: string }
+      responses:
+        '200': { description: Updated }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /technician/availability:
+    get:
+      tags: [Technicians]
+      summary: Get own availability slots
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Availability slots
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data: { type: array, items: { $ref: '#/components/schemas/Availability' } }
+    put:
+      tags: [Technicians]
+      summary: Replace own availability slots (unbooked slots only)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [slots]
+              properties:
+                slots:
+                  type: array
+                  items:
+                    type: object
+                    required: [date, startTime, endTime]
+                    properties:
+                      date: { type: string, format: date }
+                      startTime: { type: string, example: '09:00' }
+                      endTime: { type: string, example: '12:00' }
+      responses:
+        '200': { description: Availability updated }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /bookings:
+    post:
+      tags: [Bookings]
+      summary: Create a booking (customer only)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [serviceId, scheduledDate, address]
+              properties:
+                serviceId: { type: string, format: uuid }
+                scheduledDate: { type: string, format: date-time }
+                address: { type: string }
+                notes: { type: string }
+      responses:
+        '201': { description: Booking created }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    get:
+      tags: [Bookings]
+      summary: List the current customer's bookings
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/BookingStatus' } }
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Bookings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data: { type: array, items: { $ref: '#/components/schemas/Booking' } }
+                  meta: { $ref: '#/components/schemas/Meta' }
+
+  /bookings/{id}:
+    get:
+      tags: [Bookings]
+      summary: Get a booking (its customer, its technician, or an admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Booking
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data: { $ref: '#/components/schemas/Booking' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /bookings/{id}/cancel:
+    patch:
+      tags: [Bookings]
+      summary: Cancel own booking (only before IN_PROGRESS)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Cancelled }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /technician/bookings:
+    get:
+      tags: [Bookings]
+      summary: List the current technician's bookings
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/BookingStatus' } }
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200': { description: Bookings }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /technician/bookings/{id}:
+    patch:
+      tags: [Bookings]
+      summary: Accept, decline, start, or complete a booking (technician only)
+      description: |
+        Valid `action` values and required current status:
+        - `ACCEPT` (REQUESTED -> ACCEPTED)
+        - `DECLINE` (REQUESTED -> DECLINED)
+        - `START` (PAID -> IN_PROGRESS)
+        - `COMPLETE` (IN_PROGRESS -> COMPLETED)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action: { type: string, enum: [ACCEPT, DECLINE, START, COMPLETE] }
+      responses:
+        '200': { description: Booking updated }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /payments/create:
+    post:
+      tags: [Payments]
+      summary: Start a payment session for an ACCEPTED booking
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bookingId, provider]
+              properties:
+                bookingId: { type: string, format: uuid }
+                provider: { $ref: '#/components/schemas/PaymentProvider' }
+      responses:
+        '201':
+          description: Payment session created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    type: object
+                    properties:
+                      payment: { $ref: '#/components/schemas/Payment' }
+                      redirectUrl: { type: string, description: 'Stripe Checkout or SSLCommerz gateway URL to redirect the user to' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /payments/confirm:
+    post:
+      tags: [Payments]
+      summary: Manually re-verify and finalize a pending payment
+      description: |
+        Provider-agnostic: re-checks the payment with whichever gateway it used
+        (Stripe session retrieval, or SSLCommerz order validation using the
+        val_id captured by the success/IPN callback) and marks it COMPLETED +
+        the booking PAID if the gateway confirms success. Useful for
+        confirming a payment from Postman without a public webhook URL.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bookingId]
+              properties:
+                bookingId: { type: string, format: uuid }
+      responses:
+        '200': { description: Payment confirmed }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '402': { description: Gateway has not confirmed a successful payment yet }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /payments:
+    get:
+      tags: [Payments]
+      summary: List payments for bookings the current user is involved in
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Payments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data: { type: array, items: { $ref: '#/components/schemas/Payment' } }
+
+  /payments/{id}:
+    get:
+      tags: [Payments]
+      summary: Get a payment (its customer, its technician, or an admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Payment }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /payments/stripe/return:
+    get:
+      tags: [Payments]
+      summary: Browser redirect target after Stripe Checkout (no frontend, returns JSON)
+      parameters:
+        - { name: session_id, in: query, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Payment successful }
+        '402': { description: Payment not completed }
+
+  /payments/webhook/stripe:
+    post:
+      tags: [Payments]
+      summary: Stripe webhook (signature-verified, raw body) - called by Stripe, not by clients
+      responses:
+        '200': { description: Event processed }
+        '400': { description: Invalid signature }
+
+  /payments/sslcommerz/success:
+    post:
+      tags: [Payments]
+      summary: SSLCommerz success redirect/callback - called by the gateway, not by clients
+      responses:
+        '200': { description: Payment validated and finalized }
+
+  /payments/sslcommerz/fail:
+    post:
+      tags: [Payments]
+      summary: SSLCommerz failure redirect/callback - called by the gateway, not by clients
+      responses:
+        '200': { description: Payment marked failed }
+
+  /payments/sslcommerz/cancel:
+    post:
+      tags: [Payments]
+      summary: SSLCommerz cancel redirect/callback - called by the gateway, not by clients
+      responses:
+        '200': { description: Payment marked failed (cancelled) }
+
+  /payments/ipn/sslcommerz:
+    post:
+      tags: [Payments]
+      summary: SSLCommerz Instant Payment Notification - called by the gateway, not by clients
+      responses:
+        '200': { description: Event processed }
+
+  /reviews:
+    post:
+      tags: [Reviews]
+      summary: Review a completed booking (customer only, once per booking)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bookingId, rating]
+              properties:
+                bookingId: { type: string, format: uuid }
+                rating: { type: integer, minimum: 1, maximum: 5 }
+                comment: { type: string }
+      responses:
+        '201': { description: Review created }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /admin/users:
+    get:
+      tags: [Admin]
+      summary: List all users (admin, filterable by role/status)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: role, in: query, schema: { $ref: '#/components/schemas/Role' } }
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/UserStatus' } }
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data: { type: array, items: { $ref: '#/components/schemas/User' } }
+                  meta: { $ref: '#/components/schemas/Meta' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/users/{id}:
+    patch:
+      tags: [Admin]
+      summary: Ban or unban a user (admin; cannot target self or another admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { $ref: '#/components/schemas/UserStatus' }
+      responses:
+        '200': { description: User status updated }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /admin/bookings:
+    get:
+      tags: [Admin]
+      summary: List all bookings (admin, filterable)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/BookingStatus' } }
+        - { name: customerId, in: query, schema: { type: string, format: uuid } }
+        - { name: technicianId, in: query, schema: { type: string, format: uuid } }
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200': { description: Bookings }
+        '403': { $ref: '#/components/responses/Forbidden' }
