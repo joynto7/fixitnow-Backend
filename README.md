@@ -85,8 +85,12 @@ npm run dev        # http://localhost:4000, auto-reloads
 
 - Health check: `GET /health`
 - Interactive API docs: `GET /api-docs` (Swagger UI). The same file
-  (`src/docs/openapi.yaml`) can be imported directly into Postman via
+  (`src/docs/openapi.yaml`) can also be imported directly into Postman via
   **File → Import**.
+- Ready-made Postman collection: [`postman/FixItNow.postman_collection.json`](postman/FixItNow.postman_collection.json)
+  (generated from the OpenAPI spec) — import it, set the `baseUrl` collection
+  variable to your server, log in, and paste the returned JWT into the
+  `bearerToken` variable to auth every protected request.
 
 ## Demo accounts (from `prisma/seed.ts`)
 
