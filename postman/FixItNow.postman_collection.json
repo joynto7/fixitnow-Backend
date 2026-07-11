@@ -1565,7 +1565,7 @@
                 }
               ]
             },
-            "description": "If this returns an empty list, the seed data has already been consumed by a previous run of this folder. Run `npm run seed` again to reset it, then re-run this folder.",
+            "description": "If this returns an empty list, the seed data has already been consumed by a previous run of this folder. This gracefully skips the rest of folder 10 instead of cascading into failures - run `npm run seed` and re-run this folder to exercise the full lifecycle again.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -1586,10 +1586,16 @@
                 "exec": [
                   "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
                   "const json = pm.response.json();",
-                  "pm.test(\"Found a PAID seed booking (re-run `npm run seed` if this fails)\", () => pm.expect(json.data.length).to.be.above(0));",
-                  "if (json.data.length > 0) { pm.collectionVariables.set(\"seedBookingId\", json.data[0].id); pm.collectionVariables.set(\"seedCustomerEmail\", json.data[0].customer.email); }",
+                  "if (json.data.length > 0) {",
+                  "  pm.test(\"Found a PAID seed booking\", () => pm.expect(json.data.length).to.be.above(0));",
+                  "  pm.collectionVariables.set(\"seedBookingId\", json.data[0].id);",
                   "try { pm.environment.unset(\"seedBookingId\"); } catch (e) {}",
-                  "try { pm.environment.unset(\"seedCustomerEmail\"); } catch (e) {}"
+                  "  pm.collectionVariables.set(\"seedCustomerEmail\", json.data[0].customer.email);",
+                  "try { pm.environment.unset(\"seedCustomerEmail\"); } catch (e) {}",
+                  "} else {",
+                  "  try { pm.test.skip(\"No PAID seed booking - already consumed by a previous run. Run `npm run seed` to reset, then re-run this folder.\"); } catch (e) { console.log(\"No PAID seed booking - already consumed. Run `npm run seed` to reset.\"); }",
+                  "  postman.setNextRequest(\"1. Create a throwaway category\");",
+                  "}"
                 ]
               }
             }
