@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "FixItNow - home services marketplace backend API",
   "main": "dist/server.js",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc && mkdir -p dist/docs && cp src/docs/openapi.yaml dist/docs/openapi.yaml",
