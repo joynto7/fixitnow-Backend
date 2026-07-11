@@ -157,6 +157,23 @@ failures, `null` otherwise. Every success response is `{ "success": true,
 | `npm run prisma:deploy` | apply migrations in production |
 | `npm run seed` | wipe and re-seed demo data |
 
+## Known limitations
+
+- **Single currency per provider.** There's no per-service currency field, so
+  `price`/`amount` are treated as provider-native: Stripe sessions are created
+  in USD, SSLCommerz sessions in BDT (its sandbox only settles in BDT). Fine
+  for a demo; a real deployment would need an explicit currency column and
+  conversion.
+- **JWT access tokens only**, no refresh tokens — out of scope per the
+  assignment's endpoint list; tokens simply expire after `JWT_EXPIRES_IN` and
+  the user logs in again.
+- **`sslcommerz-lts`'s transitive `form-data` dependency** has a known,
+  currently-unpatched CRLF-injection advisory (`npm audit`). It's a required
+  integration with no maintained alternative; our own usage only ever passes
+  fixed field *names* into it (values are user data, e.g. customer name/email/
+  address), which is the part of `form-data` that's actually vulnerable, but
+  worth a second look before processing real, non-sandbox payments with it.
+
 ## Deployment
 
 The app is a standard long-running Express server (not serverless functions),
