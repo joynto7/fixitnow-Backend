@@ -50,8 +50,10 @@ export const listTechnicians = async (query: ListTechniciansQuery) => {
 };
 
 export const getTechnicianById = async (id: string) => {
-  const technician = await prisma.technicianProfile.findUnique({
-    where: { id },
+  // findFirst (not findUnique) so a banned technician's user status can be
+  // filtered in the same query, matching listTechnicians' visibility rule.
+  const technician = await prisma.technicianProfile.findFirst({
+    where: { id, user: { status: 'ACTIVE' } },
     include: {
       ...publicTechnicianInclude,
       reviews: {

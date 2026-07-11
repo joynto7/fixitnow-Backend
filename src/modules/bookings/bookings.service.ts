@@ -23,7 +23,9 @@ interface ListQuery {
 }
 
 export const createBooking = async (customerId: string, data: CreateBookingInput) => {
-  const service = await prisma.service.findUnique({ where: { id: data.serviceId } });
+  const service = await prisma.service.findFirst({
+    where: { id: data.serviceId, technician: { user: { status: 'ACTIVE' } } },
+  });
   if (!service) {
     throw new AppError(404, 'Service not found');
   }

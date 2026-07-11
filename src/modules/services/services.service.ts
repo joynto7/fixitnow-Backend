@@ -26,6 +26,7 @@ const technicianInclude = {
 
 export const listServices = async (query: ListServicesQuery) => {
   const where: Prisma.ServiceWhereInput = {
+    technician: { user: { status: 'ACTIVE' } },
     ...(query.categoryId ? { categoryId: query.categoryId } : {}),
     ...(query.technicianId ? { technicianId: query.technicianId } : {}),
     ...(query.minPrice !== undefined || query.maxPrice !== undefined
@@ -61,7 +62,12 @@ export const listServices = async (query: ListServicesQuery) => {
 };
 
 export const getServiceById = async (id: string) => {
-  const service = await prisma.service.findUnique({ where: { id }, include: technicianInclude });
+  // findFirst (not findUnique) so a banned technician's service can be
+  // filtered in the same query, matching listServices' visibility rule.
+  const service = await prisma.service.findFirst({
+    where: { id, technician: { user: { status: 'ACTIVE' } } },
+    include: technicianInclude,
+  });
   if (!service) {
     throw new AppError(404, 'Service not found');
   }
