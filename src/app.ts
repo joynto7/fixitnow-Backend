@@ -10,6 +10,7 @@ import { apiRouter } from './routes';
 import { stripeWebhookHandler } from './modules/payments/payments.controller';
 import { notFoundHandler } from './middlewares/notFound.middleware';
 import { errorHandler } from './middlewares/error.middleware';
+import { apiLimiter } from './middlewares/rateLimit.middleware';
 
 export const app = express();
 
@@ -34,7 +35,7 @@ app.get('/health', (_req: Request, res: Response) => {
 const openapiDocument = YAML.load(path.join(__dirname, 'docs', 'openapi.yaml'));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiDocument));
 
-app.use('/api', apiRouter);
+app.use('/api', apiLimiter, apiRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
