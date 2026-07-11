@@ -69,6 +69,9 @@ Environment variables (see `.env.example`):
 
 ### 3. Set up the database
 
+No local Postgres yet? `docker compose up -d` starts one (matches the
+`DATABASE_URL` in `.env.example`: `postgresql://fixitnow:fixitnow_dev_pw@localhost:5544/fixitnow`).
+
 ```bash
 npm run prisma:migrate   # creates tables from prisma/schema.prisma
 npm run seed              # wipes + seeds deterministic demo data (see below)

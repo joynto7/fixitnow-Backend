@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fixitnow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fixitnow
+      POSTGRES_PASSWORD: fixitnow_dev_pw
+      POSTGRES_DB: fixitnow
+    ports:
+      - '5544:5432'
+    volumes:
+      - fixitnow_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  fixitnow_postgres_data:
