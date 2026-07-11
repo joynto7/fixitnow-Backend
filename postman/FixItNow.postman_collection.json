@@ -51,7 +51,8 @@
                   "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
                   "const json = pm.response.json();",
                   "pm.test(\"Got a token\", () => pm.expect(json.data.token).to.be.a(\"string\"));",
-                  "pm.collectionVariables.set(\"adminToken\", json.data.token);"
+                  "pm.collectionVariables.set(\"adminToken\", json.data.token);",
+                  "try { pm.environment.unset(\"adminToken\"); } catch (e) {}"
                 ]
               }
             }
@@ -99,8 +100,11 @@
                   "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
                   "const json = pm.response.json();",
                   "pm.collectionVariables.set(\"technicianToken\", json.data.token);",
+                  "try { pm.environment.unset(\"technicianToken\"); } catch (e) {}",
                   "pm.collectionVariables.set(\"technicianUserId\", json.data.user.id);",
-                  "pm.collectionVariables.set(\"technicianProfileId\", json.data.user.technicianProfile.id);"
+                  "try { pm.environment.unset(\"technicianUserId\"); } catch (e) {}",
+                  "pm.collectionVariables.set(\"technicianProfileId\", json.data.user.technicianProfile.id);",
+                  "try { pm.environment.unset(\"technicianProfileId\"); } catch (e) {}"
                 ]
               }
             }
@@ -148,7 +152,9 @@
                   "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
                   "const json = pm.response.json();",
                   "pm.collectionVariables.set(\"customerToken\", json.data.token);",
-                  "pm.collectionVariables.set(\"customerUserId\", json.data.user.id);"
+                  "try { pm.environment.unset(\"customerToken\"); } catch (e) {}",
+                  "pm.collectionVariables.set(\"customerUserId\", json.data.user.id);",
+                  "try { pm.environment.unset(\"customerUserId\"); } catch (e) {}"
                 ]
               }
             }
@@ -252,7 +258,8 @@
                 "exec": [
                   "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
                   "const json = pm.response.json();",
-                  "pm.collectionVariables.set(\"categoryId\", json.data.id);"
+                  "pm.collectionVariables.set(\"categoryId\", json.data.id);",
+                  "try { pm.environment.unset(\"categoryId\"); } catch (e) {}"
                 ]
               }
             }
@@ -598,7 +605,8 @@
                 "exec": [
                   "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
                   "const json = pm.response.json();",
-                  "pm.collectionVariables.set(\"serviceId\", json.data.id);"
+                  "pm.collectionVariables.set(\"serviceId\", json.data.id);",
+                  "try { pm.environment.unset(\"serviceId\"); } catch (e) {}"
                 ]
               }
             }
@@ -844,6 +852,7 @@
                   "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
                   "const json = pm.response.json();",
                   "pm.collectionVariables.set(\"bookingId\", json.data.id);",
+                  "try { pm.environment.unset(\"bookingId\"); } catch (e) {}",
                   "pm.test(\"Status is REQUESTED\", () => pm.expect(json.data.status).to.eql(\"REQUESTED\"));"
                 ]
               }
@@ -1087,7 +1096,8 @@
                 "exec": [
                   "const isSuccess = pm.response.code === 201;",
                   "pm.test(\"Status 201 (fails with 500 if STRIPE_SECRET_KEY is still a placeholder)\", () => pm.response.to.have.status(201));",
-                  "if (isSuccess) { pm.collectionVariables.set(\"paymentId\", pm.response.json().data.payment.id); }"
+                  "if (isSuccess) { pm.collectionVariables.set(\"paymentId\", pm.response.json().data.payment.id); }",
+                  "try { pm.environment.unset(\"paymentId\"); } catch (e) {}"
                 ]
               }
             }
@@ -1229,7 +1239,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
-                  "pm.collectionVariables.set(\"cancelBookingId\", pm.response.json().data.id);"
+                  "pm.collectionVariables.set(\"cancelBookingId\", pm.response.json().data.id);",
+                  "try { pm.environment.unset(\"cancelBookingId\"); } catch (e) {}"
                 ]
               }
             }
@@ -1526,7 +1537,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
-                  "pm.collectionVariables.set(\"seedTechnicianToken\", pm.response.json().data.token);"
+                  "pm.collectionVariables.set(\"seedTechnicianToken\", pm.response.json().data.token);",
+                  "try { pm.environment.unset(\"seedTechnicianToken\"); } catch (e) {}"
                 ]
               }
             }
@@ -1575,7 +1587,9 @@
                   "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
                   "const json = pm.response.json();",
                   "pm.test(\"Found a PAID seed booking (re-run `npm run seed` if this fails)\", () => pm.expect(json.data.length).to.be.above(0));",
-                  "if (json.data.length > 0) { pm.collectionVariables.set(\"seedBookingId\", json.data[0].id); pm.collectionVariables.set(\"seedCustomerEmail\", json.data[0].customer.email); }"
+                  "if (json.data.length > 0) { pm.collectionVariables.set(\"seedBookingId\", json.data[0].id); pm.collectionVariables.set(\"seedCustomerEmail\", json.data[0].customer.email); }",
+                  "try { pm.environment.unset(\"seedBookingId\"); } catch (e) {}",
+                  "try { pm.environment.unset(\"seedCustomerEmail\"); } catch (e) {}"
                 ]
               }
             }
@@ -1791,7 +1805,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
-                  "pm.collectionVariables.set(\"seedCustomerToken\", pm.response.json().data.token);"
+                  "pm.collectionVariables.set(\"seedCustomerToken\", pm.response.json().data.token);",
+                  "try { pm.environment.unset(\"seedCustomerToken\"); } catch (e) {}"
                 ]
               }
             }
@@ -1854,26 +1869,139 @@
       ]
     },
     {
-      "name": "11 - Cleanup (deletes what this run created)",
-      "description": "",
+      "name": "11 - Delete endpoints demo",
+      "description": "The category/service created in folders 02+04 are intentionally left in place - they end up with real booking history (folders 06+08), and this API correctly refuses to delete a service or category that still has bookings/services attached. This folder proves the delete endpoints themselves work by using disposable records that were never booked.",
       "item": [
         {
-          "name": "1. Delete the test service",
+          "name": "1. Create a throwaway category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "categories"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Delete-Demo Category {{$timestamp}}\",\n  \"description\": \"Created only to be deleted again\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"deleteDemoCategoryId\", pm.response.json().data.id);",
+                  "try { pm.environment.unset(\"deleteDemoCategoryId\"); } catch (e) {}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Create a throwaway service under it",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "services"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{technicianToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Delete-Demo Service\",\n  \"description\": \"Created only to be deleted again\",\n  \"price\": 10,\n  \"categoryId\": \"{{deleteDemoCategoryId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"deleteDemoServiceId\", pm.response.json().data.id);",
+                  "try { pm.environment.unset(\"deleteDemoServiceId\"); } catch (e) {}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Delete the throwaway service",
           "request": {
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/services/{{serviceId}}",
+              "raw": "{{baseUrl}}/services/{{deleteDemoServiceId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "services",
-                "{{serviceId}}"
+                "{{deleteDemoServiceId}}"
               ],
               "query": []
             },
-            "description": "",
+            "description": "Succeeds because this service (unlike the one from folder 04) has zero bookings against it.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -1899,23 +2027,23 @@
           ]
         },
         {
-          "name": "2. Delete the test category",
+          "name": "4. Delete the throwaway category",
           "request": {
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/admin/categories/{{categoryId}}",
+              "raw": "{{baseUrl}}/admin/categories/{{deleteDemoCategoryId}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "admin",
                 "categories",
-                "{{categoryId}}"
+                "{{deleteDemoCategoryId}}"
               ],
               "query": []
             },
-            "description": "",
+            "description": "Succeeds now that its only service has just been deleted.",
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -2214,6 +2342,29 @@
     {
       "key": "seedCustomerEmail",
       "value": ""
+    },
+    {
+      "key": "deleteDemoCategoryId",
+      "value": ""
+    },
+    {
+      "key": "deleteDemoServiceId",
+      "value": ""
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// This collection is fully self-contained via collection variables.",
+          "// If a Postman Environment is active, clear any same-named variables",
+          "// it defines so they cannot shadow the values this collection sets.",
+          "const managed = [\"baseUrl\",\"adminToken\",\"technicianToken\",\"technicianUserId\",\"technicianProfileId\",\"customerToken\",\"customerUserId\",\"categoryId\",\"serviceId\",\"bookingId\",\"paymentId\",\"cancelBookingId\",\"seedTechnicianToken\",\"seedBookingId\",\"seedCustomerToken\",\"seedCustomerEmail\",\"deleteDemoCategoryId\",\"deleteDemoServiceId\"];",
+          "managed.forEach((key) => { try { pm.environment.unset(key); } catch (e) {} });"
+        ]
+      }
     }
   ]
 }
