@@ -88,9 +88,20 @@ npm run dev        # http://localhost:4000, auto-reloads
   (`src/docs/openapi.yaml`) can also be imported directly into Postman via
   **File → Import**.
 - Ready-made Postman collection: [`postman/FixItNow.postman_collection.json`](postman/FixItNow.postman_collection.json)
-  (generated from the OpenAPI spec) — import it, set the `baseUrl` collection
-  variable to your server, log in, and paste the returned JWT into the
-  `bearerToken` variable to auth every protected request.
+  — a single ordered, self-chaining flow (folders `01`-`11`), not just a flat
+  endpoint list. Import it and hit **Run** (Collection Runner) on the whole
+  collection: each request's test script feeds the tokens/ids the next one
+  needs (auth tokens, category/service/booking ids) via collection variables,
+  so nothing needs to be copied by hand. `baseUrl` is already set to the live
+  deployment.
+  - Folder `07` (payment session creation) only goes green with real
+    Stripe/SSLCommerz keys configured on the server.
+  - Folder `10` demonstrates the full paid → in-progress → completed →
+    reviewed lifecycle using the seed data's pre-paid booking, so it only
+    passes once per fresh `npm run seed` — it fails with a clear message
+    telling you to reseed if run again against already-consumed data.
+  - Folder `12` is reference-only (Stripe/SSLCommerz call these, not a
+    client) — deselect it before running the collection.
 
 ## Demo accounts (from `prisma/seed.ts`)
 

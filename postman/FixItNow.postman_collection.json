@@ -1,155 +1,196 @@
 {
+  "info": {
+    "name": "FixItNow API - Runnable Smoke Test",
+    "description": "A single ordered, auto-chaining flow: run folders 01-11 top to bottom (or hit Run on the whole collection) and every request should pass. Folder 07 needs real Stripe/SSLCommerz keys configured on the server to go green; folder 10 only passes once per fresh `npm run seed`; folder 12 is reference-only and excluded from the runnable flow.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
   "item": [
     {
-      "name": "auth",
+      "name": "01 - Auth (run first)",
       "description": "",
       "item": [
         {
-          "name": "register",
-          "description": "",
-          "item": [
-            {
-              "id": "8912d276-71e6-48ee-b3b3-f653a1b82539",
-              "name": "Register a new customer or technician",
-              "request": {
-                "name": "Register a new customer or technician",
-                "description": {},
-                "url": {
-                  "path": [
-                    "auth",
-                    "register"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "POST",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"name\": \"Alice Customer\",\n  \"email\": \"alice.customer@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"+8801700000010\",\n  \"role\": \"CUSTOMER\"\n}",
-                  "options": {
-                    "raw": {
-                      "headerFamily": "json",
-                      "language": "json"
-                    }
-                  }
-                },
-                "auth": null
-              },
-              "response": [],
-              "event": [],
-              "protocolProfileBehavior": {
-                "disableBodyPruning": true
+          "name": "1. Login as seeded admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
               }
-            }
-          ]
-        },
-        {
-          "name": "login",
-          "description": "",
-          "item": [
-            {
-              "id": "588d68ac-678a-4bf2-848d-7bb481438ccb",
-              "name": "Log in and receive a JWT",
-              "request": {
-                "name": "Log in and receive a JWT",
-                "description": {},
-                "url": {
-                  "path": [
-                    "auth",
-                    "login"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "POST",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"email\": \"admin@fixitnow.com\",\n  \"password\": \"Admin123!\"\n}",
-                  "options": {
-                    "raw": {
-                      "headerFamily": "json",
-                      "language": "json"
-                    }
-                  }
-                },
-                "auth": null
-              },
-              "response": [],
-              "event": [],
-              "protocolProfileBehavior": {
-                "disableBodyPruning": true
-              }
-            }
-          ]
-        },
-        {
-          "name": "me",
-          "description": "",
-          "item": [
-            {
-              "id": "0b28da66-5050-482f-a4e6-aead0b8bc205",
-              "name": "Get the current authenticated user",
-              "request": {
-                "name": "Get the current authenticated user",
-                "description": {},
-                "url": {
-                  "path": [
-                    "auth",
-                    "me"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "GET",
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{bearerToken}}"
-                    }
-                  ]
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ],
+              "query": []
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@fixitnow.com\",\n  \"password\": \"Admin123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
                 }
-              },
-              "response": [],
-              "event": [],
-              "protocolProfileBehavior": {
-                "disableBodyPruning": true
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Got a token\", () => pm.expect(json.data.token).to.be.a(\"string\"));",
+                  "pm.collectionVariables.set(\"adminToken\", json.data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Register a fresh technician",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ],
+              "query": []
+            },
+            "description": "Uses a timestamped email so this is safe to run repeatedly without a 409 conflict.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Runner Technician\",\n  \"email\": \"runner.tech.{{$timestamp}}@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"+8801700000099\",\n  \"role\": \"TECHNICIAN\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"technicianToken\", json.data.token);",
+                  "pm.collectionVariables.set(\"technicianUserId\", json.data.user.id);",
+                  "pm.collectionVariables.set(\"technicianProfileId\", json.data.user.technicianProfile.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Register a fresh customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ],
+              "query": []
+            },
+            "description": "Uses a timestamped email so this is safe to run repeatedly without a 409 conflict.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Runner Customer\",\n  \"email\": \"runner.customer.{{$timestamp}}@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"+8801700000098\",\n  \"role\": \"CUSTOMER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"customerToken\", json.data.token);",
+                  "pm.collectionVariables.set(\"customerUserId\", json.data.user.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Get current user (technician)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{technicianToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
               }
             }
           ]
@@ -157,766 +198,189 @@
       ]
     },
     {
-      "name": "categories",
+      "name": "02 - Categories",
       "description": "",
       "item": [
         {
-          "id": "9b2d45c2-6f30-4b2f-ada3-24f5f690692f",
-          "name": "List all service categories (public)",
+          "name": "1. Create a category (admin)",
           "request": {
-            "name": "List all service categories (public)",
-            "description": {},
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
+              "raw": "{{baseUrl}}/admin/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "categories"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Runner Category {{$timestamp}}\",\n  \"description\": \"Created by the Postman test runner\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"categoryId\", json.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Update the category (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/categories/{{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "categories",
+                "{{categoryId}}"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated by the Postman test runner\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. List categories (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categories",
+              "host": [
+                "{{baseUrl}}"
+              ],
               "path": [
                 "categories"
               ],
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "query": [],
-              "variable": []
+              "query": []
             },
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              }
-            ],
-            "method": "GET",
-            "auth": null
+            "description": ""
           },
           "response": [],
-          "event": [],
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          }
-        }
-      ]
-    },
-    {
-      "name": "admin",
-      "description": "",
-      "item": [
-        {
-          "name": "categories",
-          "description": "",
-          "item": [
+          "event": [
             {
-              "id": "cdad384c-17d9-4aea-b065-4425964ca45d",
-              "name": "List categories (admin)",
-              "request": {
-                "name": "List categories (admin)",
-                "description": {},
-                "url": {
-                  "path": [
-                    "admin",
-                    "categories"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "GET",
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{bearerToken}}"
-                    }
-                  ]
-                }
-              },
-              "response": [],
-              "event": [],
-              "protocolProfileBehavior": {
-                "disableBodyPruning": true
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
               }
-            },
-            {
-              "id": "48cfb9f0-0482-4cf0-82a1-d1387c3f18bb",
-              "name": "Create a category (admin)",
-              "request": {
-                "name": "Create a category (admin)",
-                "description": {},
-                "url": {
-                  "path": [
-                    "admin",
-                    "categories"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "POST",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"name\": \"Plumbing\",\n  \"description\": \"Pipes, leaks, and installations\"\n}",
-                  "options": {
-                    "raw": {
-                      "headerFamily": "json",
-                      "language": "json"
-                    }
-                  }
-                },
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{bearerToken}}"
-                    }
-                  ]
-                }
-              },
-              "response": [],
-              "event": [],
-              "protocolProfileBehavior": {
-                "disableBodyPruning": true
-              }
-            },
-            {
-              "name": "{id}",
-              "description": "",
-              "item": [
-                {
-                  "id": "4a882cd3-97fb-4403-9d0a-544d5585c93e",
-                  "name": "Update a category (admin)",
-                  "request": {
-                    "name": "Update a category (admin)",
-                    "description": {},
-                    "url": {
-                      "path": [
-                        "admin",
-                        "categories",
-                        "{{categoryId}}"
-                      ],
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "query": [],
-                      "variable": []
-                    },
-                    "header": [
-                      {
-                        "key": "Content-Type",
-                        "value": "application/json"
-                      },
-                      {
-                        "key": "Accept",
-                        "value": "application/json"
-                      }
-                    ],
-                    "method": "PUT",
-                    "body": {
-                      "mode": "raw",
-                      "raw": "{\n  \"name\": \"Plumbing & Gas Fitting\",\n  \"description\": \"Pipes, leaks, installations, and gas line work\"\n}",
-                      "options": {
-                        "raw": {
-                          "headerFamily": "json",
-                          "language": "json"
-                        }
-                      }
-                    },
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearerToken}}"
-                        }
-                      ]
-                    }
-                  },
-                  "response": [],
-                  "event": [],
-                  "protocolProfileBehavior": {
-                    "disableBodyPruning": true
-                  }
-                },
-                {
-                  "id": "08d8b053-124d-4e76-9460-cc4f99b78188",
-                  "name": "Delete a category (admin, blocked if it still has services)",
-                  "request": {
-                    "name": "Delete a category (admin, blocked if it still has services)",
-                    "description": {},
-                    "url": {
-                      "path": [
-                        "admin",
-                        "categories",
-                        "{{categoryId}}"
-                      ],
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "query": [],
-                      "variable": []
-                    },
-                    "header": [
-                      {
-                        "key": "Accept",
-                        "value": "application/json"
-                      }
-                    ],
-                    "method": "DELETE",
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearerToken}}"
-                        }
-                      ]
-                    }
-                  },
-                  "response": [],
-                  "event": [],
-                  "protocolProfileBehavior": {
-                    "disableBodyPruning": true
-                  }
-                }
-              ]
             }
           ]
         },
         {
-          "name": "users",
-          "description": "",
-          "item": [
-            {
-              "id": "b47f3b04-fab2-40dc-811f-d0955d867696",
-              "name": "List all users (admin, filterable by role/status)",
-              "request": {
-                "name": "List all users (admin, filterable by role/status)",
-                "description": {},
-                "url": {
-                  "path": [
-                    "admin",
-                    "users"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [
-                    {
-                      "disabled": false,
-                      "description": {
-                        "content": " (This can only be one of CUSTOMER,TECHNICIAN,ADMIN)",
-                        "type": "text/plain"
-                      },
-                      "key": "role",
-                      "value": "TECHNICIAN"
-                    },
-                    {
-                      "disabled": false,
-                      "description": {
-                        "content": " (This can only be one of ACTIVE,BANNED)",
-                        "type": "text/plain"
-                      },
-                      "key": "status",
-                      "value": "BANNED"
-                    },
-                    {
-                      "disabled": false,
-                      "description": {
-                        "content": "",
-                        "type": "text/plain"
-                      },
-                      "key": "page",
-                      "value": "1"
-                    },
-                    {
-                      "disabled": false,
-                      "description": {
-                        "content": "",
-                        "type": "text/plain"
-                      },
-                      "key": "limit",
-                      "value": "20"
-                    }
-                  ],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "GET",
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{bearerToken}}"
-                    }
-                  ]
-                }
-              },
-              "response": [],
-              "event": [],
-              "protocolProfileBehavior": {
-                "disableBodyPruning": true
-              }
-            },
-            {
-              "name": "{id}",
-              "description": "",
-              "item": [
-                {
-                  "id": "e28c6744-33b4-40fd-8b7f-6621718432f5",
-                  "name": "Ban or unban a user (admin; cannot target self or another admin)",
-                  "request": {
-                    "name": "Ban or unban a user (admin; cannot target self or another admin)",
-                    "description": {},
-                    "url": {
-                      "path": [
-                        "admin",
-                        "users",
-                        "{{userId}}"
-                      ],
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "query": [],
-                      "variable": []
-                    },
-                    "header": [
-                      {
-                        "key": "Content-Type",
-                        "value": "application/json"
-                      },
-                      {
-                        "key": "Accept",
-                        "value": "application/json"
-                      }
-                    ],
-                    "method": "PATCH",
-                    "body": {
-                      "mode": "raw",
-                      "raw": "{\n  \"status\": \"BANNED\"\n}",
-                      "options": {
-                        "raw": {
-                          "headerFamily": "json",
-                          "language": "json"
-                        }
-                      }
-                    },
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearerToken}}"
-                        }
-                      ]
-                    }
-                  },
-                  "response": [],
-                  "event": [],
-                  "protocolProfileBehavior": {
-                    "disableBodyPruning": true
-                  }
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "bookings",
-          "description": "",
-          "item": [
-            {
-              "id": "a6fbbd20-5014-471c-92e5-039874fd8f36",
-              "name": "List all bookings (admin, filterable)",
-              "request": {
-                "name": "List all bookings (admin, filterable)",
-                "description": {},
-                "url": {
-                  "path": [
-                    "admin",
-                    "bookings"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [
-                    {
-                      "disabled": false,
-                      "description": {
-                        "content": " (This can only be one of REQUESTED,ACCEPTED,DECLINED,PAID,IN_PROGRESS,COMPLETED,CANCELLED)",
-                        "type": "text/plain"
-                      },
-                      "key": "status",
-                      "value": "DECLINED"
-                    },
-                    {
-                      "disabled": true,
-                      "description": {
-                        "content": "",
-                        "type": "text/plain"
-                      },
-                      "key": "customerId",
-                      "value": "{{userId}}"
-                    },
-                    {
-                      "disabled": true,
-                      "description": {
-                        "content": "",
-                        "type": "text/plain"
-                      },
-                      "key": "technicianId",
-                      "value": "{{technicianId}}"
-                    },
-                    {
-                      "disabled": false,
-                      "description": {
-                        "content": "",
-                        "type": "text/plain"
-                      },
-                      "key": "page",
-                      "value": "1"
-                    },
-                    {
-                      "disabled": false,
-                      "description": {
-                        "content": "",
-                        "type": "text/plain"
-                      },
-                      "key": "limit",
-                      "value": "20"
-                    }
-                  ],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "GET",
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{bearerToken}}"
-                    }
-                  ]
-                }
-              },
-              "response": [],
-              "event": [],
-              "protocolProfileBehavior": {
-                "disableBodyPruning": true
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "services",
-      "description": "",
-      "item": [
-        {
-          "id": "8dc0406e-fae6-49d2-9c25-065a752e73bc",
-          "name": "Browse services (public, filterable)",
+          "name": "4. List categories (admin)",
           "request": {
-            "name": "Browse services (public, filterable)",
-            "description": {},
-            "url": {
-              "path": [
-                "services"
-              ],
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "query": [
-                {
-                  "disabled": true,
-                  "description": {
-                    "content": "",
-                    "type": "text/plain"
-                  },
-                  "key": "categoryId",
-                  "value": "{{categoryId}}"
-                },
-                {
-                  "disabled": true,
-                  "description": {
-                    "content": "",
-                    "type": "text/plain"
-                  },
-                  "key": "technicianId",
-                  "value": "{{technicianId}}"
-                },
-                {
-                  "disabled": true,
-                  "description": {
-                    "content": "",
-                    "type": "text/plain"
-                  },
-                  "key": "minPrice",
-                  "value": "20"
-                },
-                {
-                  "disabled": true,
-                  "description": {
-                    "content": "",
-                    "type": "text/plain"
-                  },
-                  "key": "maxPrice",
-                  "value": "150"
-                },
-                {
-                  "disabled": true,
-                  "description": {
-                    "content": "",
-                    "type": "text/plain"
-                  },
-                  "key": "search",
-                  "value": "leak"
-                },
-                {
-                  "disabled": false,
-                  "description": {
-                    "content": "",
-                    "type": "text/plain"
-                  },
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "disabled": false,
-                  "description": {
-                    "content": "",
-                    "type": "text/plain"
-                  },
-                  "key": "limit",
-                  "value": "20"
-                }
-              ],
-              "variable": []
-            },
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              }
-            ],
             "method": "GET",
-            "auth": null
-          },
-          "response": [],
-          "event": [],
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          }
-        },
-        {
-          "id": "277e46d2-7a47-4b44-ba7c-9673b3697c5a",
-          "name": "Create a service (technician only)",
-          "request": {
-            "name": "Create a service (technician only)",
-            "description": {},
+            "header": [],
             "url": {
-              "path": [
-                "services"
-              ],
+              "raw": "{{baseUrl}}/admin/categories",
               "host": [
                 "{{baseUrl}}"
               ],
-              "query": [],
-              "variable": []
+              "path": [
+                "admin",
+                "categories"
+              ],
+              "query": []
             },
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Accept",
-                "value": "application/json"
-              }
-            ],
-            "method": "POST",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Leak Repair\",\n  \"description\": \"Fix leaking pipes and joints\",\n  \"price\": 49.99,\n  \"categoryId\": \"{{categoryId}}\"\n}",
-              "options": {
-                "raw": {
-                  "headerFamily": "json",
-                  "language": "json"
-                }
-              }
-            },
+            "description": "",
             "auth": {
               "type": "bearer",
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{bearerToken}}"
+                  "value": "{{adminToken}}",
+                  "type": "string"
                 }
               ]
             }
           },
           "response": [],
-          "event": [],
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          }
-        },
-        {
-          "name": "{id}",
-          "description": "",
-          "item": [
+          "event": [
             {
-              "id": "6a8c63f9-40fd-48fd-bd6f-2844ad90db33",
-              "name": "Get a service by id (public)",
-              "request": {
-                "name": "Get a service by id (public)",
-                "description": {},
-                "url": {
-                  "path": [
-                    "services",
-                    "{{serviceId}}"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "GET",
-                "auth": null
-              },
-              "response": [],
-              "event": [],
-              "protocolProfileBehavior": {
-                "disableBodyPruning": true
-              }
-            },
-            {
-              "id": "e3a39297-4f07-4789-a551-c8e11bc76cf2",
-              "name": "Update own service (technician only)",
-              "request": {
-                "name": "Update own service (technician only)",
-                "description": {},
-                "url": {
-                  "path": [
-                    "services",
-                    "{{serviceId}}"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "PUT",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"title\": \"Leak Repair (Updated)\",\n  \"description\": \"Fix leaking pipes, joints, and fittings\",\n  \"price\": 59.99\n}",
-                  "options": {
-                    "raw": {
-                      "headerFamily": "json",
-                      "language": "json"
-                    }
-                  }
-                },
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{bearerToken}}"
-                    }
-                  ]
-                }
-              },
-              "response": [],
-              "event": [],
-              "protocolProfileBehavior": {
-                "disableBodyPruning": true
-              }
-            },
-            {
-              "id": "7d344222-7faf-48dc-89fc-1df56f95d05e",
-              "name": "Delete own service (technician only, blocked if it has bookings)",
-              "request": {
-                "name": "Delete own service (technician only, blocked if it has bookings)",
-                "description": {},
-                "url": {
-                  "path": [
-                    "services",
-                    "{{serviceId}}"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "DELETE",
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{bearerToken}}"
-                    }
-                  ]
-                }
-              },
-              "response": [],
-              "event": [],
-              "protocolProfileBehavior": {
-                "disableBodyPruning": true
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
               }
             }
           ]
@@ -924,1178 +388,1795 @@
       ]
     },
     {
-      "name": "technicians",
+      "name": "03 - Technician self-service",
       "description": "",
       "item": [
         {
-          "id": "bef68aff-e970-489f-a23f-7117a5abcf78",
-          "name": "Browse technicians (public, filterable)",
+          "name": "1. Update technician profile",
           "request": {
-            "name": "Browse technicians (public, filterable)",
-            "description": {},
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
+              "raw": "{{baseUrl}}/technician/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "technician",
+                "profile"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{technicianToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"Registered via the Postman test runner.\",\n  \"experienceYears\": 5,\n  \"location\": \"Dhaka\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Set availability",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/technician/availability",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "technician",
+                "availability"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{technicianToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"slots\": [\n    {\n      \"date\": \"2026-09-01\",\n      \"startTime\": \"09:00\",\n      \"endTime\": \"12:00\"\n    },\n    {\n      \"date\": \"2026-09-02\",\n      \"startTime\": \"13:00\",\n      \"endTime\": \"17:00\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Get own availability",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/technician/availability",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "technician",
+                "availability"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{technicianToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Services",
+      "description": "",
+      "item": [
+        {
+          "name": "1. Create a service",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "services"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{technicianToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Runner Test Service\",\n  \"description\": \"Created by the Postman test runner\",\n  \"price\": 49.99,\n  \"categoryId\": \"{{categoryId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"serviceId\", json.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Browse services (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/services",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "services"
+              ],
+              "query": []
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Get service by id (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/services/{{serviceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "services",
+                "{{serviceId}}"
+              ],
+              "query": []
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Update own service",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/services/{{serviceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "services",
+                "{{serviceId}}"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{technicianToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 59.99\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 - Technicians (public)",
+      "description": "",
+      "item": [
+        {
+          "name": "1. Browse technicians (public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/technicians",
+              "host": [
+                "{{baseUrl}}"
+              ],
               "path": [
                 "technicians"
               ],
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "query": [
-                {
-                  "disabled": true,
-                  "description": {
-                    "content": "",
-                    "type": "text/plain"
-                  },
-                  "key": "categoryId",
-                  "value": "{{categoryId}}"
-                },
-                {
-                  "disabled": true,
-                  "description": {
-                    "content": "",
-                    "type": "text/plain"
-                  },
-                  "key": "location",
-                  "value": "Dhaka"
-                },
-                {
-                  "disabled": true,
-                  "description": {
-                    "content": "",
-                    "type": "text/plain"
-                  },
-                  "key": "minRating",
-                  "value": "4"
-                },
-                {
-                  "disabled": true,
-                  "description": {
-                    "content": "",
-                    "type": "text/plain"
-                  },
-                  "key": "search",
-                  "value": "leak"
-                },
-                {
-                  "disabled": false,
-                  "description": {
-                    "content": "",
-                    "type": "text/plain"
-                  },
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "disabled": false,
-                  "description": {
-                    "content": "",
-                    "type": "text/plain"
-                  },
-                  "key": "limit",
-                  "value": "20"
-                }
-              ],
-              "variable": []
+              "query": []
             },
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              }
-            ],
-            "method": "GET",
-            "auth": null
+            "description": ""
           },
           "response": [],
-          "event": [],
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          }
-        },
-        {
-          "name": "{id}",
-          "description": "",
-          "item": [
+          "event": [
             {
-              "id": "5fcf3bd9-9589-428e-a1ab-6bf8a57567cf",
-              "name": "Get a technician's public profile (services + recent reviews)",
-              "request": {
-                "name": "Get a technician's public profile (services + recent reviews)",
-                "description": {},
-                "url": {
-                  "path": [
-                    "technicians",
-                    "{{technicianId}}"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "GET",
-                "auth": null
-              },
-              "response": [],
-              "event": [],
-              "protocolProfileBehavior": {
-                "disableBodyPruning": true
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "technician",
-      "description": "",
-      "item": [
-        {
-          "name": "profile",
-          "description": "",
-          "item": [
-            {
-              "id": "c0993942-f498-45b0-9cfc-c203bbfb32f7",
-              "name": "Update own technician profile",
-              "request": {
-                "name": "Update own technician profile",
-                "description": {},
-                "url": {
-                  "path": [
-                    "technician",
-                    "profile"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "PUT",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"bio\": \"10+ years of experience in residential plumbing.\",\n  \"experienceYears\": 10,\n  \"location\": \"Dhaka\"\n}",
-                  "options": {
-                    "raw": {
-                      "headerFamily": "json",
-                      "language": "json"
-                    }
-                  }
-                },
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{bearerToken}}"
-                    }
-                  ]
-                }
-              },
-              "response": [],
-              "event": [],
-              "protocolProfileBehavior": {
-                "disableBodyPruning": true
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
               }
             }
           ]
         },
         {
-          "name": "availability",
-          "description": "",
-          "item": [
-            {
-              "id": "56380bc4-4fc0-424b-9130-8171d4dd0f1d",
-              "name": "Get own availability slots",
-              "request": {
-                "name": "Get own availability slots",
-                "description": {},
-                "url": {
-                  "path": [
-                    "technician",
-                    "availability"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "GET",
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{bearerToken}}"
-                    }
-                  ]
-                }
-              },
-              "response": [],
-              "event": [],
-              "protocolProfileBehavior": {
-                "disableBodyPruning": true
-              }
-            },
-            {
-              "id": "1af34029-1e8f-4534-ae5e-d4193675d377",
-              "name": "Replace own availability slots (unbooked slots only)",
-              "request": {
-                "name": "Replace own availability slots (unbooked slots only)",
-                "description": {},
-                "url": {
-                  "path": [
-                    "technician",
-                    "availability"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "PUT",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"slots\": [\n    {\n      \"date\": \"2026-08-01\",\n      \"startTime\": \"09:00\",\n      \"endTime\": \"12:00\"\n    },\n    {\n      \"date\": \"2026-08-02\",\n      \"startTime\": \"13:00\",\n      \"endTime\": \"17:00\"\n    }\n  ]\n}",
-                  "options": {
-                    "raw": {
-                      "headerFamily": "json",
-                      "language": "json"
-                    }
-                  }
-                },
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{bearerToken}}"
-                    }
-                  ]
-                }
-              },
-              "response": [],
-              "event": [],
-              "protocolProfileBehavior": {
-                "disableBodyPruning": true
-              }
-            }
-          ]
-        },
-        {
-          "name": "bookings",
-          "description": "",
-          "item": [
-            {
-              "id": "dea57164-cc0d-42be-a131-48b3b3a72fe1",
-              "name": "List the current technician's bookings",
-              "request": {
-                "name": "List the current technician's bookings",
-                "description": {},
-                "url": {
-                  "path": [
-                    "technician",
-                    "bookings"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [
-                    {
-                      "disabled": false,
-                      "description": {
-                        "content": " (This can only be one of REQUESTED,ACCEPTED,DECLINED,PAID,IN_PROGRESS,COMPLETED,CANCELLED)",
-                        "type": "text/plain"
-                      },
-                      "key": "status",
-                      "value": "DECLINED"
-                    },
-                    {
-                      "disabled": false,
-                      "description": {
-                        "content": "",
-                        "type": "text/plain"
-                      },
-                      "key": "page",
-                      "value": "1"
-                    },
-                    {
-                      "disabled": false,
-                      "description": {
-                        "content": "",
-                        "type": "text/plain"
-                      },
-                      "key": "limit",
-                      "value": "20"
-                    }
-                  ],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "GET",
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{bearerToken}}"
-                    }
-                  ]
-                }
-              },
-              "response": [],
-              "event": [],
-              "protocolProfileBehavior": {
-                "disableBodyPruning": true
-              }
-            },
-            {
-              "name": "{id}",
-              "description": "",
-              "item": [
-                {
-                  "id": "a0889e5f-625d-44a9-aaef-bdf46afeba4b",
-                  "name": "Accept, decline, start, or complete a booking (technician only)",
-                  "request": {
-                    "name": "Accept, decline, start, or complete a booking (technician only)",
-                    "description": {
-                      "content": "Valid `action` values and required current status:\n- `ACCEPT` (REQUESTED -> ACCEPTED)\n- `DECLINE` (REQUESTED -> DECLINED)\n- `START` (PAID -> IN_PROGRESS)\n- `COMPLETE` (IN_PROGRESS -> COMPLETED)\n",
-                      "type": "text/plain"
-                    },
-                    "url": {
-                      "path": [
-                        "technician",
-                        "bookings",
-                        "{{bookingId}}"
-                      ],
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "query": [],
-                      "variable": []
-                    },
-                    "header": [
-                      {
-                        "key": "Content-Type",
-                        "value": "application/json"
-                      },
-                      {
-                        "key": "Accept",
-                        "value": "application/json"
-                      }
-                    ],
-                    "method": "PATCH",
-                    "body": {
-                      "mode": "raw",
-                      "raw": "{\n  \"action\": \"ACCEPT\"\n}",
-                      "options": {
-                        "raw": {
-                          "headerFamily": "json",
-                          "language": "json"
-                        }
-                      }
-                    },
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearerToken}}"
-                        }
-                      ]
-                    }
-                  },
-                  "response": [],
-                  "event": [],
-                  "protocolProfileBehavior": {
-                    "disableBodyPruning": true
-                  }
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "bookings",
-      "description": "",
-      "item": [
-        {
-          "id": "19ef115b-3ce1-4e64-bceb-b3d025a97158",
-          "name": "Create a booking (customer only)",
+          "name": "2. Get technician by id (public)",
           "request": {
-            "name": "Create a booking (customer only)",
-            "description": {},
+            "method": "GET",
+            "header": [],
             "url": {
-              "path": [
-                "bookings"
-              ],
+              "raw": "{{baseUrl}}/technicians/{{technicianProfileId}}",
               "host": [
                 "{{baseUrl}}"
               ],
-              "query": [],
-              "variable": []
+              "path": [
+                "technicians",
+                "{{technicianProfileId}}"
+              ],
+              "query": []
             },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 - Bookings",
+      "description": "",
+      "item": [
+        {
+          "name": "1. Create a booking (customer)",
+          "request": {
+            "method": "POST",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
-              },
-              {
-                "key": "Accept",
-                "value": "application/json"
               }
             ],
-            "method": "POST",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"serviceId\": \"{{serviceId}}\",\n  \"scheduledDate\": \"2026-08-15T10:00:00Z\",\n  \"address\": \"12 Gulshan Avenue, Dhaka\",\n  \"notes\": \"Kitchen sink is leaking under the cabinet.\"\n}",
-              "options": {
-                "raw": {
-                  "headerFamily": "json",
-                  "language": "json"
-                }
-              }
-            },
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{bearerToken}}"
-                }
-              ]
-            }
-          },
-          "response": [],
-          "event": [],
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          }
-        },
-        {
-          "id": "fb456ffe-7988-4f77-8075-1d0f54668808",
-          "name": "List the current customer's bookings",
-          "request": {
-            "name": "List the current customer's bookings",
-            "description": {},
             "url": {
-              "path": [
-                "bookings"
-              ],
+              "raw": "{{baseUrl}}/bookings",
               "host": [
                 "{{baseUrl}}"
               ],
-              "query": [
-                {
-                  "disabled": false,
-                  "description": {
-                    "content": " (This can only be one of REQUESTED,ACCEPTED,DECLINED,PAID,IN_PROGRESS,COMPLETED,CANCELLED)",
-                    "type": "text/plain"
-                  },
-                  "key": "status",
-                  "value": "DECLINED"
-                },
-                {
-                  "disabled": false,
-                  "description": {
-                    "content": "",
-                    "type": "text/plain"
-                  },
-                  "key": "page",
-                  "value": "1"
-                },
-                {
-                  "disabled": false,
-                  "description": {
-                    "content": "",
-                    "type": "text/plain"
-                  },
-                  "key": "limit",
-                  "value": "20"
-                }
+              "path": [
+                "bookings"
               ],
-              "variable": []
+              "query": []
             },
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              }
-            ],
-            "method": "GET",
+            "description": "",
             "auth": {
               "type": "bearer",
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{bearerToken}}"
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceId\": \"{{serviceId}}\",\n  \"scheduledDate\": \"2026-09-10T10:00:00Z\",\n  \"address\": \"12 Gulshan Avenue, Dhaka\",\n  \"notes\": \"Created by the Postman test runner\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set(\"bookingId\", json.data.id);",
+                  "pm.test(\"Status is REQUESTED\", () => pm.expect(json.data.status).to.eql(\"REQUESTED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. List customer's own bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
                 }
               ]
             }
           },
           "response": [],
-          "event": [],
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          }
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         },
         {
-          "name": "{id}",
-          "description": "",
-          "item": [
-            {
-              "id": "1c170601-806e-4bc9-bfd4-15ce0bbd18a6",
-              "name": "Get a booking (its customer, its technician, or an admin)",
-              "request": {
-                "name": "Get a booking (its customer, its technician, or an admin)",
-                "description": {},
-                "url": {
-                  "path": [
-                    "bookings",
-                    "{{bookingId}}"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "GET",
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{bearerToken}}"
-                    }
-                  ]
-                }
-              },
-              "response": [],
-              "event": [],
-              "protocolProfileBehavior": {
-                "disableBodyPruning": true
-              }
+          "name": "3. Get booking by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/{{bookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings",
+                "{{bookingId}}"
+              ],
+              "query": []
             },
-            {
-              "name": "cancel",
-              "description": "",
-              "item": [
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
                 {
-                  "id": "c1d6784d-dfa3-4bba-bd94-ce17553139dd",
-                  "name": "Cancel own booking (only before IN_PROGRESS)",
-                  "request": {
-                    "name": "Cancel own booking (only before IN_PROGRESS)",
-                    "description": {},
-                    "url": {
-                      "path": [
-                        "bookings",
-                        "{{bookingId}}",
-                        "cancel"
-                      ],
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "query": [],
-                      "variable": []
-                    },
-                    "header": [
-                      {
-                        "key": "Accept",
-                        "value": "application/json"
-                      }
-                    ],
-                    "method": "PATCH",
-                    "body": {},
-                    "auth": {
-                      "type": "bearer",
-                      "bearer": [
-                        {
-                          "key": "token",
-                          "value": "{{bearerToken}}"
-                        }
-                      ]
-                    }
-                  },
-                  "response": [],
-                  "event": [],
-                  "protocolProfileBehavior": {
-                    "disableBodyPruning": true
-                  }
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
                 }
               ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. List technician's own bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/technician/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "technician",
+                "bookings"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{technicianToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5. Technician accepts the booking",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/technician/bookings/{{bookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "technician",
+                "bookings",
+                "{{bookingId}}"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{technicianToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"ACCEPT\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Status is ACCEPTED\", () => pm.expect(json.data.status).to.eql(\"ACCEPTED\"));"
+                ]
+              }
             }
           ]
         }
       ]
     },
     {
-      "name": "payments",
-      "description": "",
+      "name": "07 - Payments (needs real Stripe/SSLCommerz keys on the server)",
+      "description": "Actually completing a payment needs a real browser checkout, so it cannot be automated here - this folder only proves session creation works. The full paid -> in-progress -> completed -> reviewed lifecycle is demonstrated in folder 10 using pre-seeded data instead.",
       "item": [
         {
-          "name": "create",
-          "description": "",
-          "item": [
-            {
-              "id": "84f7b84a-2370-46aa-9058-13405c9db9aa",
-              "name": "Start a payment session for an ACCEPTED booking",
-              "request": {
-                "name": "Start a payment session for an ACCEPTED booking",
-                "description": {},
-                "url": {
-                  "path": [
-                    "payments",
-                    "create"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "POST",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"provider\": \"STRIPE\"\n}",
-                  "options": {
-                    "raw": {
-                      "headerFamily": "json",
-                      "language": "json"
-                    }
-                  }
-                },
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{bearerToken}}"
-                    }
-                  ]
-                }
-              },
-              "response": [],
-              "event": [],
-              "protocolProfileBehavior": {
-                "disableBodyPruning": true
-              }
-            }
-          ]
-        },
-        {
-          "name": "confirm",
-          "description": "",
-          "item": [
-            {
-              "id": "f8adabcd-56ce-4b42-a65b-e3e6f8e9607e",
-              "name": "Manually re-verify and finalize a pending payment",
-              "request": {
-                "name": "Manually re-verify and finalize a pending payment",
-                "description": {
-                  "content": "Provider-agnostic: re-checks the payment with whichever gateway it used\n(Stripe session retrieval, or SSLCommerz order validation using the\nval_id captured by the success/IPN callback) and marks it COMPLETED +\nthe booking PAID if the gateway confirms success. Useful for\nconfirming a payment from Postman without a public webhook URL.\n",
-                  "type": "text/plain"
-                },
-                "url": {
-                  "path": [
-                    "payments",
-                    "confirm"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "POST",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"bookingId\": \"{{bookingId}}\"\n}",
-                  "options": {
-                    "raw": {
-                      "headerFamily": "json",
-                      "language": "json"
-                    }
-                  }
-                },
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{bearerToken}}"
-                    }
-                  ]
-                }
-              },
-              "response": [],
-              "event": [],
-              "protocolProfileBehavior": {
-                "disableBodyPruning": true
-              }
-            }
-          ]
-        },
-        {
-          "id": "b4eccb42-368a-40fc-8331-cf7ca4f7d33a",
-          "name": "List payments for bookings the current user is involved in",
+          "name": "1. Create a Stripe payment session",
           "request": {
-            "name": "List payments for bookings the current user is involved in",
-            "description": {},
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
+              "raw": "{{baseUrl}}/payments/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "create"
+              ],
+              "query": []
+            },
+            "description": "Only succeeds if the server has a real STRIPE_SECRET_KEY configured. With a placeholder key this correctly returns a 500 with a Stripe error message - that is expected, not a bug in this collection.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"provider\": \"STRIPE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const isSuccess = pm.response.code === 201;",
+                  "pm.test(\"Status 201 (fails with 500 if STRIPE_SECRET_KEY is still a placeholder)\", () => pm.response.to.have.status(201));",
+                  "if (isSuccess) { pm.collectionVariables.set(\"paymentId\", pm.response.json().data.payment.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. List current user's payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments",
+              "host": [
+                "{{baseUrl}}"
+              ],
               "path": [
                 "payments"
               ],
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "query": [],
-              "variable": []
+              "query": []
             },
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              }
-            ],
-            "method": "GET",
+            "description": "",
             "auth": {
               "type": "bearer",
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{bearerToken}}"
+                  "value": "{{customerToken}}",
+                  "type": "string"
                 }
               ]
             }
           },
           "response": [],
-          "event": [],
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          }
-        },
-        {
-          "name": "{id}",
-          "description": "",
-          "item": [
+          "event": [
             {
-              "id": "32a9afcc-559c-4f51-a2db-9624c5889ef2",
-              "name": "Get a payment (its customer, its technician, or an admin)",
-              "request": {
-                "name": "Get a payment (its customer, its technician, or an admin)",
-                "description": {},
-                "url": {
-                  "path": [
-                    "payments",
-                    "{{paymentId}}"
-                  ],
-                  "host": [
-                    "{{baseUrl}}"
-                  ],
-                  "query": [],
-                  "variable": []
-                },
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "method": "GET",
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{bearerToken}}"
-                    }
-                  ]
-                }
-              },
-              "response": [],
-              "event": [],
-              "protocolProfileBehavior": {
-                "disableBodyPruning": true
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
               }
             }
           ]
         },
         {
-          "name": "stripe",
-          "description": "",
-          "item": [
-            {
-              "name": "return",
-              "description": "",
-              "item": [
-                {
-                  "id": "390e4a32-8a5e-4570-9931-ff72a3b31c77",
-                  "name": "Browser redirect target after Stripe Checkout (no frontend, returns JSON)",
-                  "request": {
-                    "name": "Browser redirect target after Stripe Checkout (no frontend, returns JSON)",
-                    "description": {},
-                    "url": {
-                      "path": [
-                        "payments",
-                        "stripe",
-                        "return"
-                      ],
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "query": [
-                        {
-                          "disabled": true,
-                          "description": {
-                            "content": "(Required) ",
-                            "type": "text/plain"
-                          },
-                          "key": "session_id",
-                          "value": "cs_test_a1b2c3d4e5f6g7h8i9j0"
-                        }
-                      ],
-                      "variable": []
-                    },
-                    "method": "GET",
-                    "auth": null
-                  },
-                  "response": [],
-                  "event": [],
-                  "protocolProfileBehavior": {
-                    "disableBodyPruning": true
-                  }
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "webhook",
-          "description": "",
-          "item": [
-            {
-              "name": "stripe",
-              "description": "",
-              "item": [
-                {
-                  "id": "80354e5e-b7f3-4e67-bdcd-03f6e72a028f",
-                  "name": "Stripe webhook (signature-verified, raw body) - called by Stripe, not by clients",
-                  "request": {
-                    "name": "Stripe webhook (signature-verified, raw body) - called by Stripe, not by clients",
-                    "description": {},
-                    "url": {
-                      "path": [
-                        "payments",
-                        "webhook",
-                        "stripe"
-                      ],
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "query": [],
-                      "variable": []
-                    },
-                    "method": "POST",
-                    "body": {},
-                    "auth": null
-                  },
-                  "response": [],
-                  "event": [],
-                  "protocolProfileBehavior": {
-                    "disableBodyPruning": true
-                  }
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "sslcommerz",
-          "description": "",
-          "item": [
-            {
-              "name": "success",
-              "description": "",
-              "item": [
-                {
-                  "id": "91838706-3053-43be-93a4-15acaf873e31",
-                  "name": "SSLCommerz success redirect/callback - called by the gateway, not by clients",
-                  "request": {
-                    "name": "SSLCommerz success redirect/callback - called by the gateway, not by clients",
-                    "description": {},
-                    "url": {
-                      "path": [
-                        "payments",
-                        "sslcommerz",
-                        "success"
-                      ],
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "query": [],
-                      "variable": []
-                    },
-                    "method": "POST",
-                    "body": {},
-                    "auth": null
-                  },
-                  "response": [],
-                  "event": [],
-                  "protocolProfileBehavior": {
-                    "disableBodyPruning": true
-                  }
-                }
-              ]
+          "name": "3. Get payment by id (only if step 1 succeeded)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/{{paymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "{{paymentId}}"
+              ],
+              "query": []
             },
-            {
-              "name": "fail",
-              "description": "",
-              "item": [
+            "description": "Skipped/expected to fail if payment creation above did not succeed (no real provider keys configured yet).",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
                 {
-                  "id": "372a7c00-ce2f-4432-a26e-0713a9a9f757",
-                  "name": "SSLCommerz failure redirect/callback - called by the gateway, not by clients",
-                  "request": {
-                    "name": "SSLCommerz failure redirect/callback - called by the gateway, not by clients",
-                    "description": {},
-                    "url": {
-                      "path": [
-                        "payments",
-                        "sslcommerz",
-                        "fail"
-                      ],
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "query": [],
-                      "variable": []
-                    },
-                    "method": "POST",
-                    "body": {},
-                    "auth": null
-                  },
-                  "response": [],
-                  "event": [],
-                  "protocolProfileBehavior": {
-                    "disableBodyPruning": true
-                  }
-                }
-              ]
-            },
-            {
-              "name": "cancel",
-              "description": "",
-              "item": [
-                {
-                  "id": "61d49786-7bc4-4dea-8356-0f01f91f601b",
-                  "name": "SSLCommerz cancel redirect/callback - called by the gateway, not by clients",
-                  "request": {
-                    "name": "SSLCommerz cancel redirect/callback - called by the gateway, not by clients",
-                    "description": {},
-                    "url": {
-                      "path": [
-                        "payments",
-                        "sslcommerz",
-                        "cancel"
-                      ],
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "query": [],
-                      "variable": []
-                    },
-                    "method": "POST",
-                    "body": {},
-                    "auth": null
-                  },
-                  "response": [],
-                  "event": [],
-                  "protocolProfileBehavior": {
-                    "disableBodyPruning": true
-                  }
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
                 }
               ]
             }
-          ]
-        },
-        {
-          "name": "ipn",
-          "description": "",
-          "item": [
+          },
+          "response": [],
+          "event": [
             {
-              "name": "sslcommerz",
-              "description": "",
-              "item": [
-                {
-                  "id": "83baefa5-b9de-4009-a1b4-588460d6b5ed",
-                  "name": "SSLCommerz Instant Payment Notification - called by the gateway, not by clients",
-                  "request": {
-                    "name": "SSLCommerz Instant Payment Notification - called by the gateway, not by clients",
-                    "description": {},
-                    "url": {
-                      "path": [
-                        "payments",
-                        "ipn",
-                        "sslcommerz"
-                      ],
-                      "host": [
-                        "{{baseUrl}}"
-                      ],
-                      "query": [],
-                      "variable": []
-                    },
-                    "method": "POST",
-                    "body": {},
-                    "auth": null
-                  },
-                  "response": [],
-                  "event": [],
-                  "protocolProfileBehavior": {
-                    "disableBodyPruning": true
-                  }
-                }
-              ]
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
             }
           ]
         }
       ]
     },
     {
-      "name": "reviews",
+      "name": "08 - Cancellation demo",
       "description": "",
       "item": [
         {
-          "id": "e266efbe-b3bb-4cb2-a0cf-e7ddf600ed2f",
-          "name": "Review a completed booking (customer only, once per booking)",
+          "name": "1. Create a second booking to cancel",
           "request": {
-            "name": "Review a completed booking (customer only, once per booking)",
-            "description": {},
-            "url": {
-              "path": [
-                "reviews"
-              ],
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "query": [],
-              "variable": []
-            },
+            "method": "POST",
             "header": [
               {
                 "key": "Content-Type",
                 "value": "application/json"
-              },
-              {
-                "key": "Accept",
-                "value": "application/json"
               }
             ],
-            "method": "POST",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"rating\": 5,\n  \"comment\": \"Great work, very professional and fixed the issue quickly!\"\n}",
-              "options": {
-                "raw": {
-                  "headerFamily": "json",
-                  "language": "json"
-                }
-              }
+            "url": {
+              "raw": "{{baseUrl}}/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings"
+              ],
+              "query": []
             },
+            "description": "",
             "auth": {
               "type": "bearer",
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{bearerToken}}"
+                  "value": "{{customerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceId\": \"{{serviceId}}\",\n  \"scheduledDate\": \"2026-09-12T10:00:00Z\",\n  \"address\": \"12 Gulshan Avenue, Dhaka\",\n  \"notes\": \"This one gets cancelled by the runner\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set(\"cancelBookingId\", pm.response.json().data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Cancel it",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bookings/{{cancelBookingId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bookings",
+                "{{cancelBookingId}}",
+                "cancel"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{customerToken}}",
+                  "type": "string"
                 }
               ]
             }
           },
           "response": [],
-          "event": [],
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          }
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Status is CANCELLED\", () => pm.expect(pm.response.json().data.status).to.eql(\"CANCELLED\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "09 - Admin oversight",
+      "description": "",
+      "item": [
+        {
+          "name": "1. List all users (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. List all bookings (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/bookings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "bookings"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Ban the runner customer",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{customerUserId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                "{{customerUserId}}"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"BANNED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Status is BANNED\", () => pm.expect(pm.response.json().data.status).to.eql(\"BANNED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Unban the runner customer (restore state)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{customerUserId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                "{{customerUserId}}"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Status is ACTIVE\", () => pm.expect(pm.response.json().data.status).to.eql(\"ACTIVE\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "10 - Paid booking lifecycle demo (uses seed data - run once per fresh seed)",
+      "description": "",
+      "item": [
+        {
+          "name": "1. Login as seeded technician (frank)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ],
+              "query": []
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"frank.tech@fixitnow.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set(\"seedTechnicianToken\", pm.response.json().data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Find his PAID seed booking",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/technician/bookings?status=PAID",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "technician",
+                "bookings"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PAID"
+                }
+              ]
+            },
+            "description": "If this returns an empty list, the seed data has already been consumed by a previous run of this folder. Run `npm run seed` again to reset it, then re-run this folder.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{seedTechnicianToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test(\"Found a PAID seed booking (re-run `npm run seed` if this fails)\", () => pm.expect(json.data.length).to.be.above(0));",
+                  "if (json.data.length > 0) { pm.collectionVariables.set(\"seedBookingId\", json.data[0].id); pm.collectionVariables.set(\"seedCustomerEmail\", json.data[0].customer.email); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Confirm its payment (already completed, so this is idempotent)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "confirm"
+              ],
+              "query": []
+            },
+            "description": "This booking was seeded as already paid, so confirm short-circuits and returns 200 without calling Stripe/SSLCommerz.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{seedTechnicianToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{seedBookingId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Payment is COMPLETED\", () => pm.expect(pm.response.json().data.status).to.eql(\"COMPLETED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Start the booking (PAID -> IN_PROGRESS)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/technician/bookings/{{seedBookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "technician",
+                "bookings",
+                "{{seedBookingId}}"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{seedTechnicianToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"START\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Status is IN_PROGRESS\", () => pm.expect(pm.response.json().data.status).to.eql(\"IN_PROGRESS\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5. Complete the booking (IN_PROGRESS -> COMPLETED)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/technician/bookings/{{seedBookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "technician",
+                "bookings",
+                "{{seedBookingId}}"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{seedTechnicianToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"COMPLETE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Status is COMPLETED\", () => pm.expect(pm.response.json().data.status).to.eql(\"COMPLETED\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. Login as the booking’s customer (emma)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ],
+              "query": []
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"emma@fixitnow.com\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set(\"seedCustomerToken\", pm.response.json().data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7. Review the completed booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{seedCustomerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{seedBookingId}}\",\n  \"rating\": 5,\n  \"comment\": \"Excellent work, very professional! (via Postman runner)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201 (409 if this folder already ran once against this seed)\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "11 - Cleanup (deletes what this run created)",
+      "description": "",
+      "item": [
+        {
+          "name": "1. Delete the test service",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/services/{{serviceId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "services",
+                "{{serviceId}}"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{technicianToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Delete the test category",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/categories/{{categoryId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "categories",
+                "{{categoryId}}"
+              ],
+              "query": []
+            },
+            "description": "",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "12 - Reference only (do NOT include in Runner)",
+      "description": "These are called by the payment gateways themselves, not by a client - deselect this folder before using Collection Runner, since they will not return success codes without a real gateway-signed request.",
+      "item": [
+        {
+          "name": "Stripe webhook (Stripe calls this, not you)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/webhook/stripe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "webhook",
+                "stripe"
+              ],
+              "query": []
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Requires a real Stripe-Signature header - not callable manually.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SSLCommerz success callback (gateway calls this, not you)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/sslcommerz/success",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "sslcommerz",
+                "success"
+              ],
+              "query": []
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tran_id\": \"example\",\n  \"val_id\": \"example\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SSLCommerz fail callback (gateway calls this, not you)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/sslcommerz/fail",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "sslcommerz",
+                "fail"
+              ],
+              "query": []
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tran_id\": \"example\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SSLCommerz cancel callback (gateway calls this, not you)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/sslcommerz/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "sslcommerz",
+                "cancel"
+              ],
+              "query": []
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tran_id\": \"example\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "SSLCommerz IPN (gateway calls this, not you)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/ipn/sslcommerz",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "ipn",
+                "sslcommerz"
+              ],
+              "query": []
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tran_id\": \"example\",\n  \"val_id\": \"example\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Stripe checkout return (needs a real session_id from an actual checkout)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/payments/stripe/return?session_id=cs_test_replace_with_a_real_session_id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "stripe",
+                "return"
+              ],
+              "query": [
+                {
+                  "key": "session_id",
+                  "value": "cs_test_replace_with_a_real_session_id"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
         }
       ]
     }
   ],
-  "event": [],
   "variable": [
     {
       "key": "baseUrl",
       "value": "https://fixitnow-backend-bw9e.onrender.com/api"
     },
     {
-      "key": "bearerToken",
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "technicianToken",
+      "value": ""
+    },
+    {
+      "key": "technicianUserId",
+      "value": ""
+    },
+    {
+      "key": "technicianProfileId",
+      "value": ""
+    },
+    {
+      "key": "customerToken",
+      "value": ""
+    },
+    {
+      "key": "customerUserId",
       "value": ""
     },
     {
@@ -2107,10 +2188,6 @@
       "value": ""
     },
     {
-      "key": "technicianId",
-      "value": ""
-    },
-    {
       "key": "bookingId",
       "value": ""
     },
@@ -2119,17 +2196,24 @@
       "value": ""
     },
     {
-      "key": "userId",
+      "key": "cancelBookingId",
+      "value": ""
+    },
+    {
+      "key": "seedTechnicianToken",
+      "value": ""
+    },
+    {
+      "key": "seedBookingId",
+      "value": ""
+    },
+    {
+      "key": "seedCustomerToken",
+      "value": ""
+    },
+    {
+      "key": "seedCustomerEmail",
       "value": ""
     }
-  ],
-  "info": {
-    "_postman_id": "efc16f15-e06e-48b2-b15e-bf372ea90c9a",
-    "name": "FixItNow API",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": {
-      "content": "Backend API for **FixItNow**, a home services marketplace connecting customers\nwith technicians (plumbing, electrical, cleaning, painting, etc).\n\nAll responses share one envelope shape:\n- Success: `{ \"success\": true, \"message\": string, \"data\": ..., \"meta\"?: {...} }`\n- Error:   `{ \"success\": false, \"message\": string, \"errorDetails\": ... }`\n\nAuthenticate by logging in (or registering) to receive a JWT, then send it as\n`Authorization: Bearer <token>` on protected endpoints.\n",
-      "type": "text/plain"
-    }
-  }
+  ]
 }
