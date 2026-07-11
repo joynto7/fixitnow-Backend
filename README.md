@@ -28,7 +28,7 @@ npm run dev                   # http://localhost:4000
 
 | Role | Email | Password |
 |---|---|---|
-| Admin | `admin@fixitnow.com` (or your `ADMIN_EMAIL`) | `Admin123!` (or your `ADMIN_PASSWORD`) |
+| Admin | `admin005@fixitnow.com` (or your `ADMIN_EMAIL`) | `Admin107623!` (or your `ADMIN_PASSWORD`) |
 | Technician | `bob.tech@fixitnow.com` / `erin.tech@fixitnow.com` / `frank.tech@fixitnow.com` | `password123` |
 | Customer | `carol@fixitnow.com` / `dave@fixitnow.com` / `emma@fixitnow.com` | `password123` |
 
