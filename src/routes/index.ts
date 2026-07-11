@@ -4,6 +4,7 @@ import { categoryPublicRouter, categoryAdminRouter } from '../modules/categories
 import { serviceRouter } from '../modules/services/services.routes';
 import { technicianPublicRouter, technicianSelfRouter } from '../modules/technicians/technicians.routes';
 import { bookingRouter, technicianBookingRouter } from '../modules/bookings/bookings.routes';
+import { paymentRouter } from '../modules/payments/payments.routes';
 
 export const apiRouter = Router();
 
@@ -21,3 +22,4 @@ apiRouter.use('/technicians', technicianPublicRouter);
 apiRouter.use('/technician/bookings', technicianBookingRouter);
 apiRouter.use('/technician', technicianSelfRouter);
 apiRouter.use('/bookings', bookingRouter);
+apiRouter.use('/payments', paymentRouter);
