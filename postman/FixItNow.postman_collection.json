@@ -38,7 +38,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"<string>\",\n  \"email\": \"<email>\",\n  \"password\": \"<string>\",\n  \"phone\": \"<string>\",\n  \"role\": \"CUSTOMER\"\n}",
+                  "raw": "{\n  \"name\": \"Alice Customer\",\n  \"email\": \"alice.customer@example.com\",\n  \"password\": \"password123\",\n  \"phone\": \"+8801700000010\",\n  \"role\": \"CUSTOMER\"\n}",
                   "options": {
                     "raw": {
                       "headerFamily": "json",
@@ -238,7 +238,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"email\": \"<email>\",\n  \"password\": \"<string>\"\n}",
+                  "raw": "{\n  \"email\": \"admin@fixitnow.com\",\n  \"password\": \"Admin123!\"\n}",
                   "options": {
                     "raw": {
                       "headerFamily": "json",
@@ -432,7 +432,6 @@
                   }
                 ],
                 "method": "GET",
-                "body": {},
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -569,7 +568,6 @@
               }
             ],
             "method": "GET",
-            "body": {},
             "auth": null
           },
           "response": [
@@ -648,7 +646,6 @@
                   }
                 ],
                 "method": "GET",
-                "body": {},
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -818,7 +815,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"<string>\",\n  \"description\": \"<string>\"\n}",
+                  "raw": "{\n  \"name\": \"Plumbing\",\n  \"description\": \"Pipes, leaks, and installations\"\n}",
                   "options": {
                     "raw": {
                       "headerFamily": "json",
@@ -1142,24 +1139,13 @@
                       "path": [
                         "admin",
                         "categories",
-                        ":id"
+                        "{{categoryId}}"
                       ],
                       "host": [
                         "{{baseUrl}}"
                       ],
                       "query": [],
-                      "variable": [
-                        {
-                          "type": "any",
-                          "value": "<uuid>",
-                          "key": "id",
-                          "disabled": false,
-                          "description": {
-                            "content": "(Required) ",
-                            "type": "text/plain"
-                          }
-                        }
-                      ]
+                      "variable": []
                     },
                     "header": [
                       {
@@ -1174,7 +1160,7 @@
                     "method": "PUT",
                     "body": {
                       "mode": "raw",
-                      "raw": "{\n  \"name\": \"<string>\",\n  \"description\": \"<string>\"\n}",
+                      "raw": "{\n  \"name\": \"Plumbing & Gas Fitting\",\n  \"description\": \"Pipes, leaks, installations, and gas line work\"\n}",
                       "options": {
                         "raw": {
                           "headerFamily": "json",
@@ -1337,24 +1323,13 @@
                       "path": [
                         "admin",
                         "categories",
-                        ":id"
+                        "{{categoryId}}"
                       ],
                       "host": [
                         "{{baseUrl}}"
                       ],
                       "query": [],
-                      "variable": [
-                        {
-                          "type": "any",
-                          "value": "<uuid>",
-                          "key": "id",
-                          "disabled": false,
-                          "description": {
-                            "content": "(Required) ",
-                            "type": "text/plain"
-                          }
-                        }
-                      ]
+                      "variable": []
                     },
                     "header": [
                       {
@@ -1363,7 +1338,6 @@
                       }
                     ],
                     "method": "DELETE",
-                    "body": {},
                     "auth": {
                       "type": "bearer",
                       "bearer": [
@@ -1608,7 +1582,6 @@
                   }
                 ],
                 "method": "GET",
-                "body": {},
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -1802,24 +1775,13 @@
                       "path": [
                         "admin",
                         "users",
-                        ":id"
+                        "{{userId}}"
                       ],
                       "host": [
                         "{{baseUrl}}"
                       ],
                       "query": [],
-                      "variable": [
-                        {
-                          "type": "any",
-                          "value": "<uuid>",
-                          "key": "id",
-                          "disabled": false,
-                          "description": {
-                            "content": "(Required) ",
-                            "type": "text/plain"
-                          }
-                        }
-                      ]
+                      "variable": []
                     },
                     "header": [
                       {
@@ -2158,22 +2120,22 @@
                       "value": "DECLINED"
                     },
                     {
-                      "disabled": false,
+                      "disabled": true,
                       "description": {
                         "content": "",
                         "type": "text/plain"
                       },
                       "key": "customerId",
-                      "value": "<uuid>"
+                      "value": "{{userId}}"
                     },
                     {
-                      "disabled": false,
+                      "disabled": true,
                       "description": {
                         "content": "",
                         "type": "text/plain"
                       },
                       "key": "technicianId",
-                      "value": "<uuid>"
+                      "value": "{{technicianId}}"
                     },
                     {
                       "disabled": false,
@@ -2203,7 +2165,6 @@
                   }
                 ],
                 "method": "GET",
-                "body": {},
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -2414,49 +2375,49 @@
               ],
               "query": [
                 {
-                  "disabled": false,
+                  "disabled": true,
                   "description": {
                     "content": "",
                     "type": "text/plain"
                   },
                   "key": "categoryId",
-                  "value": "<uuid>"
+                  "value": "{{categoryId}}"
                 },
                 {
-                  "disabled": false,
+                  "disabled": true,
                   "description": {
                     "content": "",
                     "type": "text/plain"
                   },
                   "key": "technicianId",
-                  "value": "<uuid>"
+                  "value": "{{technicianId}}"
                 },
                 {
-                  "disabled": false,
+                  "disabled": true,
                   "description": {
                     "content": "",
                     "type": "text/plain"
                   },
                   "key": "minPrice",
-                  "value": "<number>"
+                  "value": "20"
                 },
                 {
-                  "disabled": false,
+                  "disabled": true,
                   "description": {
                     "content": "",
                     "type": "text/plain"
                   },
                   "key": "maxPrice",
-                  "value": "<number>"
+                  "value": "150"
                 },
                 {
-                  "disabled": false,
+                  "disabled": true,
                   "description": {
                     "content": "",
                     "type": "text/plain"
                   },
                   "key": "search",
-                  "value": "<string>"
+                  "value": "leak"
                 },
                 {
                   "disabled": false,
@@ -2486,7 +2447,6 @@
               }
             ],
             "method": "GET",
-            "body": {},
             "auth": null
           },
           "response": [
@@ -2624,7 +2584,7 @@
             "method": "POST",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"<string>\",\n  \"price\": \"<number>\",\n  \"categoryId\": \"<uuid>\",\n  \"description\": \"<string>\"\n}",
+              "raw": "{\n  \"title\": \"Leak Repair\",\n  \"description\": \"Fix leaking pipes and joints\",\n  \"price\": 49.99,\n  \"categoryId\": \"{{categoryId}}\"\n}",
               "options": {
                 "raw": {
                   "headerFamily": "json",
@@ -2932,24 +2892,13 @@
                 "url": {
                   "path": [
                     "services",
-                    ":id"
+                    "{{serviceId}}"
                   ],
                   "host": [
                     "{{baseUrl}}"
                   ],
                   "query": [],
-                  "variable": [
-                    {
-                      "type": "any",
-                      "value": "<uuid>",
-                      "key": "id",
-                      "disabled": false,
-                      "description": {
-                        "content": "(Required) ",
-                        "type": "text/plain"
-                      }
-                    }
-                  ]
+                  "variable": []
                 },
                 "header": [
                   {
@@ -2958,7 +2907,6 @@
                   }
                 ],
                 "method": "GET",
-                "body": {},
                 "auth": null
               },
               "response": [
@@ -3071,24 +3019,13 @@
                 "url": {
                   "path": [
                     "services",
-                    ":id"
+                    "{{serviceId}}"
                   ],
                   "host": [
                     "{{baseUrl}}"
                   ],
                   "query": [],
-                  "variable": [
-                    {
-                      "type": "any",
-                      "value": "<uuid>",
-                      "key": "id",
-                      "disabled": false,
-                      "description": {
-                        "content": "(Required) ",
-                        "type": "text/plain"
-                      }
-                    }
-                  ]
+                  "variable": []
                 },
                 "header": [
                   {
@@ -3103,7 +3040,7 @@
                 "method": "PUT",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"title\": \"<string>\",\n  \"description\": \"<string>\",\n  \"price\": \"<number>\",\n  \"categoryId\": \"<uuid>\"\n}",
+                  "raw": "{\n  \"title\": \"Leak Repair (Updated)\",\n  \"description\": \"Fix leaking pipes, joints, and fittings\",\n  \"price\": 59.99\n}",
                   "options": {
                     "raw": {
                       "headerFamily": "json",
@@ -3331,24 +3268,13 @@
                 "url": {
                   "path": [
                     "services",
-                    ":id"
+                    "{{serviceId}}"
                   ],
                   "host": [
                     "{{baseUrl}}"
                   ],
                   "query": [],
-                  "variable": [
-                    {
-                      "type": "any",
-                      "value": "<uuid>",
-                      "key": "id",
-                      "disabled": false,
-                      "description": {
-                        "content": "(Required) ",
-                        "type": "text/plain"
-                      }
-                    }
-                  ]
+                  "variable": []
                 },
                 "header": [
                   {
@@ -3357,7 +3283,6 @@
                   }
                 ],
                 "method": "DELETE",
-                "body": {},
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -3608,40 +3533,40 @@
               ],
               "query": [
                 {
-                  "disabled": false,
+                  "disabled": true,
                   "description": {
                     "content": "",
                     "type": "text/plain"
                   },
                   "key": "categoryId",
-                  "value": "<uuid>"
+                  "value": "{{categoryId}}"
                 },
                 {
-                  "disabled": false,
+                  "disabled": true,
                   "description": {
                     "content": "",
                     "type": "text/plain"
                   },
                   "key": "location",
-                  "value": "<string>"
+                  "value": "Dhaka"
                 },
                 {
-                  "disabled": false,
+                  "disabled": true,
                   "description": {
                     "content": "",
                     "type": "text/plain"
                   },
                   "key": "minRating",
-                  "value": "<number>"
+                  "value": "4"
                 },
                 {
-                  "disabled": false,
+                  "disabled": true,
                   "description": {
                     "content": "",
                     "type": "text/plain"
                   },
                   "key": "search",
-                  "value": "<string>"
+                  "value": "leak"
                 },
                 {
                   "disabled": false,
@@ -3671,7 +3596,6 @@
               }
             ],
             "method": "GET",
-            "body": {},
             "auth": null
           },
           "response": [
@@ -3784,24 +3708,13 @@
                 "url": {
                   "path": [
                     "technicians",
-                    ":id"
+                    "{{technicianId}}"
                   ],
                   "host": [
                     "{{baseUrl}}"
                   ],
                   "query": [],
-                  "variable": [
-                    {
-                      "type": "any",
-                      "value": "<uuid>",
-                      "key": "id",
-                      "disabled": false,
-                      "description": {
-                        "content": "(Required) ",
-                        "type": "text/plain"
-                      }
-                    }
-                  ]
+                  "variable": []
                 },
                 "header": [
                   {
@@ -3810,7 +3723,6 @@
                   }
                 ],
                 "method": "GET",
-                "body": {},
                 "auth": null
               },
               "response": [
@@ -3956,7 +3868,7 @@
                 "method": "PUT",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"bio\": \"<string>\",\n  \"experienceYears\": \"<integer>\",\n  \"location\": \"<string>\"\n}",
+                  "raw": "{\n  \"bio\": \"10+ years of experience in residential plumbing.\",\n  \"experienceYears\": 10,\n  \"location\": \"Dhaka\"\n}",
                   "options": {
                     "raw": {
                       "headerFamily": "json",
@@ -4172,7 +4084,6 @@
                   }
                 ],
                 "method": "GET",
-                "body": {},
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -4264,7 +4175,7 @@
                 "method": "PUT",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"slots\": [\n    {\n      \"date\": \"<date>\",\n      \"startTime\": \"<string>\",\n      \"endTime\": \"<string>\"\n    },\n    {\n      \"date\": \"<date>\",\n      \"startTime\": \"<string>\",\n      \"endTime\": \"<string>\"\n    }\n  ]\n}",
+                  "raw": "{\n  \"slots\": [\n    {\n      \"date\": \"2026-08-01\",\n      \"startTime\": \"09:00\",\n      \"endTime\": \"12:00\"\n    },\n    {\n      \"date\": \"2026-08-02\",\n      \"startTime\": \"13:00\",\n      \"endTime\": \"17:00\"\n    }\n  ]\n}",
                   "options": {
                     "raw": {
                       "headerFamily": "json",
@@ -4508,7 +4419,6 @@
                   }
                 ],
                 "method": "GET",
-                "body": {},
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -4677,24 +4587,13 @@
                       "path": [
                         "technician",
                         "bookings",
-                        ":id"
+                        "{{bookingId}}"
                       ],
                       "host": [
                         "{{baseUrl}}"
                       ],
                       "query": [],
-                      "variable": [
-                        {
-                          "type": "any",
-                          "value": "<uuid>",
-                          "key": "id",
-                          "disabled": false,
-                          "description": {
-                            "content": "(Required) ",
-                            "type": "text/plain"
-                          }
-                        }
-                      ]
+                      "variable": []
                     },
                     "header": [
                       {
@@ -4709,7 +4608,7 @@
                     "method": "PATCH",
                     "body": {
                       "mode": "raw",
-                      "raw": "{\n  \"action\": \"COMPLETE\"\n}",
+                      "raw": "{\n  \"action\": \"ACCEPT\"\n}",
                       "options": {
                         "raw": {
                           "headerFamily": "json",
@@ -5039,7 +4938,7 @@
             "method": "POST",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"serviceId\": \"<uuid>\",\n  \"scheduledDate\": \"<dateTime>\",\n  \"address\": \"<string>\",\n  \"notes\": \"<string>\"\n}",
+              "raw": "{\n  \"serviceId\": \"{{serviceId}}\",\n  \"scheduledDate\": \"2026-08-15T10:00:00Z\",\n  \"address\": \"12 Gulshan Avenue, Dhaka\",\n  \"notes\": \"Kitchen sink is leaking under the cabinet.\"\n}",
               "options": {
                 "raw": {
                   "headerFamily": "json",
@@ -5329,7 +5228,6 @@
               }
             ],
             "method": "GET",
-            "body": {},
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -5431,24 +5329,13 @@
                 "url": {
                   "path": [
                     "bookings",
-                    ":id"
+                    "{{bookingId}}"
                   ],
                   "host": [
                     "{{baseUrl}}"
                   ],
                   "query": [],
-                  "variable": [
-                    {
-                      "type": "any",
-                      "value": "<uuid>",
-                      "key": "id",
-                      "disabled": false,
-                      "description": {
-                        "content": "(Required) ",
-                        "type": "text/plain"
-                      }
-                    }
-                  ]
+                  "variable": []
                 },
                 "header": [
                   {
@@ -5457,7 +5344,6 @@
                   }
                 ],
                 "method": "GET",
-                "body": {},
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -5653,25 +5539,14 @@
                     "url": {
                       "path": [
                         "bookings",
-                        ":id",
+                        "{{bookingId}}",
                         "cancel"
                       ],
                       "host": [
                         "{{baseUrl}}"
                       ],
                       "query": [],
-                      "variable": [
-                        {
-                          "type": "any",
-                          "value": "<uuid>",
-                          "key": "id",
-                          "disabled": false,
-                          "description": {
-                            "content": "(Required) ",
-                            "type": "text/plain"
-                          }
-                        }
-                      ]
+                      "variable": []
                     },
                     "header": [
                       {
@@ -5956,7 +5831,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"bookingId\": \"<uuid>\",\n  \"provider\": \"SSLCOMMERZ\"\n}",
+                  "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"provider\": \"STRIPE\"\n}",
                   "options": {
                     "raw": {
                       "headerFamily": "json",
@@ -6305,7 +6180,7 @@
                 "method": "POST",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"bookingId\": \"<uuid>\"\n}",
+                  "raw": "{\n  \"bookingId\": \"{{bookingId}}\"\n}",
                   "options": {
                     "raw": {
                       "headerFamily": "json",
@@ -6563,7 +6438,6 @@
               }
             ],
             "method": "GET",
-            "body": {},
             "auth": {
               "type": "bearer",
               "bearer": [
@@ -6637,24 +6511,13 @@
                 "url": {
                   "path": [
                     "payments",
-                    ":id"
+                    "{{paymentId}}"
                   ],
                   "host": [
                     "{{baseUrl}}"
                   ],
                   "query": [],
-                  "variable": [
-                    {
-                      "type": "any",
-                      "value": "<uuid>",
-                      "key": "id",
-                      "disabled": false,
-                      "description": {
-                        "content": "(Required) ",
-                        "type": "text/plain"
-                      }
-                    }
-                  ]
+                  "variable": []
                 },
                 "header": [
                   {
@@ -6663,7 +6526,6 @@
                   }
                 ],
                 "method": "GET",
-                "body": {},
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -6863,7 +6725,7 @@
                       ],
                       "query": [
                         {
-                          "disabled": false,
+                          "disabled": true,
                           "description": {
                             "content": "(Required) ",
                             "type": "text/plain"
@@ -6875,7 +6737,6 @@
                       "variable": []
                     },
                     "method": "GET",
-                    "body": {},
                     "auth": null
                   },
                   "response": [
@@ -7337,7 +7198,7 @@
             "method": "POST",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bookingId\": \"<uuid>\",\n  \"rating\": \"<integer>\",\n  \"comment\": \"<string>\"\n}",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"rating\": 5,\n  \"comment\": \"Great work, very professional and fixed the issue quickly!\"\n}",
               "options": {
                 "raw": {
                   "headerFamily": "json",
@@ -7639,10 +7500,34 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:4000/api"
+      "value": "https://your-app.onrender.com/api"
     },
     {
       "key": "bearerToken",
+      "value": ""
+    },
+    {
+      "key": "categoryId",
+      "value": ""
+    },
+    {
+      "key": "serviceId",
+      "value": ""
+    },
+    {
+      "key": "technicianId",
+      "value": ""
+    },
+    {
+      "key": "bookingId",
+      "value": ""
+    },
+    {
+      "key": "paymentId",
+      "value": ""
+    },
+    {
+      "key": "userId",
       "value": ""
     }
   ],
